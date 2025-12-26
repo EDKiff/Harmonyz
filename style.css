@@ -1,0 +1,82 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background: #000;
+  overflow: hidden;
+}
+
+.app {
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.canvas-container {
+  flex: 1;
+  background: #0f0f0f;
+}
+
+canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.controls {
+  display: flex;
+  gap: 12px;
+  padding: 16px;
+  background: #1a1a1a;
+  border-top: 1px solid #333;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+#audioInput {
+  display: none;
+}
+
+.upload-btn,
+.play-btn,
+.export-btn {
+  padding: 10px 16px;
+  background: rgba(50, 184, 198, 0.15);
+  border: 1px solid rgba(50, 184, 198, 0.3);
+  color: #32b8c6;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.9em;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.upload-btn:hover:not(:disabled),
+.play-btn:hover:not(:disabled),
+.export-btn:hover:not(:disabled) {
+  background: rgba(50, 184, 198, 0.25);
+  border-color: #32b8c6;
+}
+
+.upload-btn:disabled,
+.play-btn:disabled,
+.export-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.p { display:flex; gap:6px; align-items:center; color:#8fdbe2; font-size:12px; }
+.p input {
+  width: 70px;
+  padding: 6px 8px;
+  background:#0b0b0b;
+  color:#cfeff2;
+  border:1px solid #333;
+  border-radius:6px;
+}
