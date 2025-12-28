@@ -34,7 +34,9 @@ class Visualizer {
             for (let j = 0; j < data.length; j++) {
                 const x = marginX + (j / (data.length - 1)) * drawWidth;
                 const val = data[j] / 255;
-                const y = baselineY - (val * lineSpacing * amplify);
+                const y = baselineY - val * lineSpacing * amplify;
+                console.log(x, y);
+                ctx.strokeStyle = `rgba(${y * 0.255}, 184, 198, 1)`;
                 ctx.lineTo(x, y);
             }
 
@@ -46,19 +48,8 @@ class Visualizer {
             ctx.fillStyle = "#000000";
             ctx.fill();
 
-
-            ctx.beginPath();
-            ctx.moveTo(marginX, baselineY);
-            for (let j = 0; j < data.length; j++) {
-                const x = marginX + (j / (data.length - 1)) * drawWidth;
-                const val = data[j] / 255;
-                const y = baselineY - (val * lineSpacing * amplify);
-                ctx.lineTo(x, y);
-            }
-            ctx.lineTo(width - marginX, baselineY);
-
             ctx.lineWidth = 1.5;
-            ctx.strokeStyle = "rgba(50, 184, 198, 1)";
+            //ctx.strokeStyle = "rgba(50, 184, 198, 1)";
             ctx.stroke();
         }
     }
