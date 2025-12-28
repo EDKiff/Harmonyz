@@ -1,24 +1,26 @@
 class AudioAnalyzer {
-    constructor() {
+    constructor(fftSize = 2048, smoothingTimeConstant = 0, minDecibels = -90, maxDecibels = -10) {
         this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        this.fftSize = fftSize;
+        this.smoothingTimeConstant = smoothingTimeConstant;
+        this.minDecibels = minDecibels;
+        this.maxDecibels = maxDecibels;
     }
 
     // Analyse seconde par seconde le spectrum de l"audio
     // OfflineAudioContext sert a lire l"audio sans le jouer
     async analyzeFullAudio(arrayBuffer) {
         const audioBuffer = await this.audioContext.decodeAudioData(arrayBuffer);
-        const offlineCtx = new OfflineAudioContext(
-            1,
-            audioBuffer.length,
-            audioBuffer.sampleRate
-        );
+        const offlineCtx = new OfflineAudioContext(1, audioBuffer.length, audioBuffer.sampleRate);
 
         const source = offlineCtx.createBufferSource();
         source.buffer = audioBuffer;
 
         const analyzer = offlineCtx.createAnalyser();
-        analyzer.fftSize = 2048;
-        analyzer.smoothingTimeConstant = 0;
+        analyzer.fftSize = this.fftSize;
+        analyzer.minDecibels = this.minDecibels;
+        analyzer.maxDecibels = this.maxDecibels;
+        analyzer.smoothingTimeConstant = this.smoothingTimeConstant;
 
         source.connect(analyzer);
         analyzer.connect(offlineCtx.destination);

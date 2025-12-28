@@ -10,17 +10,20 @@ class Harmonyzzz {
         this.pRangeEnd = document.getElementById("pRangeEnd");
         this.pAmplify = document.getElementById("pAmplify");
         this.pSmoothing = document.getElementById("pSmoothing");
+        this.fftSize = document.getElementById("fftSize");
+        this.minDecibels = document.getElementById("minDecibels");
+        this.maxDecibels = document.getElementById("maxDecibels");
+        this.smoothingTimeConstant = document.getElementById("smoothingTimeConstant");
 
         this.renderer = new HarmonyRenderer(this.canvas);
-        this.analyzer = new AudioAnalyzer();
         this.renderer.changeSettings({
             lineCount: parseInt(this.pLineCount.value),
             rangeStart: parseFloat(this.pRangeStart.value),
             rangeEnd: parseFloat(this.pRangeEnd.value),
             amplify: parseFloat(this.pAmplify.value),
-            smoothing: parseInt(this.pSmoothing.value)
+            smoothing: parseInt(this.pSmoothing.value),
         });
-        
+
         this.setupCanvas();
         this.setupEventListeners();
         this.loadDefaultAudio();
@@ -40,13 +43,20 @@ class Harmonyzzz {
     }
 
     setupEventListeners() {
-        this.audioInput.addEventListener("change", async (e) => {
-            if (e.target.files.length > 0) {
-                const file = e.target.files[0];
-                const arrayBuffer = await file.arrayBuffer();
-                this.processAudio(arrayBuffer);
-                this.renderer.render();
-            }
+        this.audioInput.addEventListener("input", async (e) => {
+            await this.loadAudioAndRender(e);
+        });
+        this.fftSize.addEventListener("input", async (e) => {
+            await this.loadAudioAndRender(e);
+        });
+        this.smoothingTimeConstant.addEventListener("input", async (e) => {
+            await this.loadAudioAndRender(e);
+        });
+        this.minDecibels.addEventListener("input", async (e) => {
+            await this.loadAudioAndRender(e);
+        });
+        this.maxDecibels.addEventListener("input", async (e) => {
+            await this.loadAudioAndRender(e);
         });
 
         this.playBtn.addEventListener("click", () => {
@@ -59,33 +69,42 @@ class Harmonyzzz {
 
         this.pLineCount.addEventListener("input", (e) => {
             this.renderer.changeSettings({
-                lineCount: parseInt(e.target.value)
+                lineCount: parseInt(e.target.value),
             });
         });
 
         this.pRangeStart.addEventListener("input", (e) => {
             this.renderer.changeSettings({
-                rangeStart: parseFloat(e.target.value)
+                rangeStart: parseFloat(e.target.value),
             });
         });
 
         this.pRangeEnd.addEventListener("input", (e) => {
             this.renderer.changeSettings({
-                rangeEnd: parseFloat(e.target.value)
+                rangeEnd: parseFloat(e.target.value),
             });
         });
 
         this.pAmplify.addEventListener("input", (e) => {
             this.renderer.changeSettings({
-                amplify: parseFloat(e.target.value)
+                amplify: parseFloat(e.target.value),
             });
         });
 
         this.pSmoothing.addEventListener("input", (e) => {
             this.renderer.changeSettings({
-                smoothing: parseInt(e.target.value)
+                smoothing: parseInt(e.target.value),
             });
         });
+    }
+
+    async loadAudioAndRender(e) {
+        if (this.audioInput.files.length > 0) {
+            const file = this.audioInput.files[0];
+            const arrayBuffer = await file.arrayBuffer();
+            this.processAudio(arrayBuffer);
+            this.renderer.render();
+        }
     }
 
     async loadDefaultAudio() {
@@ -104,6 +123,19 @@ class Harmonyzzz {
         this.uploadBtn.textContent = "🔃";
 
         try {
+            console.log(
+                "Analyzing audio using parameters: ",
+                this.fftSize.value,
+                this.smoothingTimeConstant.value,
+                this.minDecibels.value,
+                this.maxDecibels.value
+            );
+            this.analyzer = new AudioAnalyzer(
+                this.fftSize.value,
+                this.smoothingTimeConstant.value,
+                this.minDecibels.value,
+                this.maxDecibels.value
+            );
             const frames = await this.analyzer.analyzeFullAudio(arrayBuffer);
             this.renderer.setFrequencyData(frames);
 
