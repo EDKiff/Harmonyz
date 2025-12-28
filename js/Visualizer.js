@@ -35,7 +35,6 @@ class Visualizer {
                 const x = marginX + (j / (data.length - 1)) * drawWidth;
                 const val = data[j] / 255;
                 const y = baselineY - val * lineSpacing * amplify;
-                console.log(x, y);
                 ctx.strokeStyle = `rgba(${y * 0.255}, 184, 198, 1)`;
                 ctx.lineTo(x, y);
             }
