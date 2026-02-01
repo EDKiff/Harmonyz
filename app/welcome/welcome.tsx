@@ -69,7 +69,7 @@ export function Welcome() {
                         <img src={logo} alt="React Router" className="hidden w-50 dark:block" />
                     </div>
                 </header>
-                <div className="max-w-75 w-full space-y-6 px-4">
+                <div className="max-w-7xl w-full space-y-6 px-4">
                     <input
                         ref={fileInputRef}
                         type="file"
@@ -77,32 +77,42 @@ export function Welcome() {
                         className="hidden"
                         accept=".mp3"
                     />
-                    <button
-                        onClick={handleButtonClick}
-                        className="w-full px-6 py-3 bg-linear-to-r from-blue-500 to-purple-600 text-white font-semibold rounded-lg shadow-lg hover:shadow-xl hover:from-blue-600 hover:to-purple-700 transform hover:scale-105 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2"
-                    >
-                        Select your song file
-                    </button>
+                    <div className="flex justify-center">
+                        <button
+                            onClick={handleButtonClick}
+                            className="max-w-md px-6 py-3 bg-linear-to-r from-blue-500 to-purple-600 text-white font-semibold rounded-lg shadow-lg hover:shadow-xl hover:from-blue-600 hover:to-purple-700 transform hover:scale-105 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2"
+                        >
+                            Select your song file
+                        </button>
+                    </div>
 
                     {selectedFile && (
                         <>
-                            <FileDetails file={selectedFile} />
-                            <AudioAnalysisParameters
-                                fftSize={parameters.fftSize}
-                                smoothingTimeConstant={parameters.smoothingTimeConstant}
-                                minDecibels={parameters.minDecibels}
-                                maxDecibels={parameters.maxDecibels}
-                                onParametersChange={setParameters}
-                            />
-                            <RendererParameters
-                                parameters={rendererParameters}
-                                onParametersChange={setRendererParameters}
-                            />
-                            <div className="w-full">
+                            <div className="w-full flex flex-row gap-4 items-start justify-center">
+                                <div className="flex-1">
+                                    <FileDetails file={selectedFile} />
+                                </div>
+                                <div className="flex-1">
+                                    <AudioAnalysisParameters
+                                        fftSize={parameters.fftSize}
+                                        smoothingTimeConstant={parameters.smoothingTimeConstant}
+                                        minDecibels={parameters.minDecibels}
+                                        maxDecibels={parameters.maxDecibels}
+                                        onParametersChange={setParameters}
+                                    />
+                                </div>
+                                <div className="flex-1">
+                                    <RendererParameters
+                                        parameters={rendererParameters}
+                                        onParametersChange={setRendererParameters}
+                                    />
+                                </div>
+                            </div>
+                            <div className="w-full flex justify-center">
                                 <button
                                     onClick={handleGeneratePoster}
                                     disabled={isGenerating}
-                                    className="w-full px-6 py-3 bg-linear-to-r from-green-500 to-teal-600 text-white font-semibold rounded-lg shadow-lg hover:shadow-xl hover:from-green-600 hover:to-teal-700 transform hover:scale-105 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+                                    className="max-w-md px-6 py-3 bg-linear-to-r from-green-500 to-teal-600 text-white font-semibold rounded-lg shadow-lg hover:shadow-xl hover:from-green-600 hover:to-teal-700 transform hover:scale-105 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
                                 >
                                     {isGenerating ? "Generating..." : "Generate Poster"}
                                 </button>
