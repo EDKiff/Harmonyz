@@ -2,6 +2,7 @@ import { useRef, useState } from "react";
 import logo from "./logo.png";
 import { PosterGenerator } from "../renderer/PosterGenerator";
 import { FileDetails } from "./FileDetails";
+import { AudioAnalysisParameters } from "./AudioAnalysisParameters";
 
 export function Welcome() {
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -9,6 +10,12 @@ export function Welcome() {
     const [isGenerating, setIsGenerating] = useState(false);
     const [generatedPoster, setGeneratedPoster] = useState<string | null>(null);
     const posterGenerator = useRef(new PosterGenerator());
+    const [parameters, setParameters] = useState({
+        fftSize: 2048,
+        smoothingTimeConstant: 0.5,
+        minDecibels: -100,
+        maxDecibels: -30,
+    });
 
     const handleButtonClick = () => {
         fileInputRef.current?.click();
@@ -26,7 +33,13 @@ export function Welcome() {
 
         setIsGenerating(true);
         try {
-            const posterUrl = await posterGenerator.current.generate(selectedFile);
+            const posterUrl = await posterGenerator.current.generate(
+                selectedFile,
+                parameters.fftSize,
+                parameters.smoothingTimeConstant,
+                parameters.minDecibels,
+                parameters.maxDecibels,
+            );
             setGeneratedPoster(posterUrl);
         } catch (error) {
             console.error("Failed to generate poster:", error);
@@ -65,6 +78,13 @@ export function Welcome() {
                     {selectedFile && (
                         <>
                             <FileDetails file={selectedFile} />
+                            <AudioAnalysisParameters
+                                fftSize={parameters.fftSize}
+                                smoothingTimeConstant={parameters.smoothingTimeConstant}
+                                minDecibels={parameters.minDecibels}
+                                maxDecibels={parameters.maxDecibels}
+                                onParametersChange={setParameters}
+                            />
                             <div className="w-full">
                                 <button
                                     onClick={handleGeneratePoster}
