@@ -3,6 +3,7 @@ import logo from "./logo.png";
 import { PosterGenerator } from "../renderer/PosterGenerator";
 import { FileDetails } from "./FileDetails";
 import { AudioAnalysisParameters } from "./AudioAnalysisParameters";
+import { RendererParameters } from "./RendererParameters";
 
 export function Welcome() {
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -15,6 +16,13 @@ export function Welcome() {
         smoothingTimeConstant: 0.5,
         minDecibels: -100,
         maxDecibels: -30,
+    });
+    const [rendererParameters, setRendererParameters] = useState({
+        lineCount: 50,
+        rangeStart: 0,
+        rangeEnd: 1,
+        amplify: 1,
+        smoothing: 2,
     });
 
     const handleButtonClick = () => {
@@ -39,6 +47,7 @@ export function Welcome() {
                 parameters.smoothingTimeConstant,
                 parameters.minDecibels,
                 parameters.maxDecibels,
+                rendererParameters,
             );
             setGeneratedPoster(posterUrl);
         } catch (error) {
@@ -84,6 +93,10 @@ export function Welcome() {
                                 minDecibels={parameters.minDecibels}
                                 maxDecibels={parameters.maxDecibels}
                                 onParametersChange={setParameters}
+                            />
+                            <RendererParameters
+                                parameters={rendererParameters}
+                                onParametersChange={setRendererParameters}
                             />
                             <div className="w-full">
                                 <button

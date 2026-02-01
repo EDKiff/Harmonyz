@@ -1,5 +1,6 @@
 import AudioAnalyzer from "~/renderer/AudioAnalyzer";
 import HarmonyRenderer from "~/renderer/HarmonyRenderer";
+import type { JoyDivisionParameters } from "./Visualizer";
 
 export class PosterGenerator {
     async generate(
@@ -8,6 +9,7 @@ export class PosterGenerator {
         smoothingTimeConstant: number = 0.5,
         minDecibels: number = -100,
         maxDecibels: number = -30,
+        rendererSettings?: JoyDivisionParameters,
     ): Promise<string> {
         const arrayBuffer = await file.arrayBuffer();
         const analyzer = new AudioAnalyzer(
@@ -18,6 +20,6 @@ export class PosterGenerator {
         );
         const frames = await analyzer.analyzeFullAudio(arrayBuffer);
         const renderer = new HarmonyRenderer();
-        return renderer.setFrequencyData(frames);
+        return renderer.setFrequencyData(frames, rendererSettings);
     }
 }
