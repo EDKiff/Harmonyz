@@ -19,6 +19,15 @@ class HarmonyRenderer {
             amplify: 1,
             smoothing: 2,
         };
+        
+        // Set up high-DPI canvas
+        const dpr = window.devicePixelRatio || 1;
+        const width = 1200;
+        const height = 800;
+        
+        this.canvas.width = width * dpr;
+        this.canvas.height = height * dpr;
+        this.ctx.scale(dpr, dpr);
     }
 
     setFrequencyData(
