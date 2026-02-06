@@ -3,7 +3,7 @@ import Visualizer, { type JoyDivisionParameters } from "./Visualizer";
 class HarmonyRenderer {
     private canvas: HTMLCanvasElement;
     private ctx: CanvasRenderingContext2D;
-    private frequencyDataFrames: Uint8Array[] | null;
+    private frequencyDataFrames: Array<Uint8Array> | null;
     private currentFrame: number;
     private settings: JoyDivisionParameters;
 
@@ -19,19 +19,19 @@ class HarmonyRenderer {
             amplify: 1,
             smoothing: 2,
         };
-        
+
         // Set up high-DPI canvas
         const dpr = window.devicePixelRatio || 1;
         const width = 1200;
         const height = 800;
-        
+
         this.canvas.width = width * dpr;
         this.canvas.height = height * dpr;
         this.ctx.scale(dpr, dpr);
     }
 
     setFrequencyData(
-        frequencyDataFrames: Uint8Array[],
+        frequencyDataFrames: Array<Uint8Array>,
         settings?: JoyDivisionParameters,
     ): Promise<string> {
         this.frequencyDataFrames = frequencyDataFrames;
