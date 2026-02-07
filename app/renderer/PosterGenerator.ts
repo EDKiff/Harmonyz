@@ -1,25 +1,28 @@
-import AudioAnalyzer from "~/renderer/AudioAnalyzer";
-import HarmonyRenderer from "~/renderer/HarmonyRenderer";
-import type { JoyDivisionParameters } from "./Visualizer";
+import AudioAnalyzer, { type AudioAnalyzerParameters } from "~/renderer/AudioAnalyzer";
+
+export type GeneratedPosterInfos = {
+    xAxis: Array<number>;
+    series: Array<Array<number>>;
+};
 
 export class PosterGenerator {
     async generate(
         file: File,
-        fftSize: number = 2048,
-        smoothingTimeConstant: number = 0.5,
-        minDecibels: number = -100,
-        maxDecibels: number = -30,
-        rendererSettings?: JoyDivisionParameters,
-    ): Promise<string> {
+        requestedMaxLines: number,
+        audioAnalyzerParams: AudioAnalyzerParameters,
+    ): Promise<GeneratedPosterInfos> {
         const arrayBuffer = await file.arrayBuffer();
-        const analyzer = new AudioAnalyzer(
-            fftSize,
-            smoothingTimeConstant,
-            minDecibels,
-            maxDecibels,
-        );
-        const frames = await analyzer.analyzeFullAudio(arrayBuffer);
-        const renderer = new HarmonyRenderer();
-        return renderer.setFrequencyData(frames, rendererSettings);
+        const analyzer = new AudioAnalyzer(audioAnalyzerParams);
+        const audioData = await analyzer.analyzeFullAudio(arrayBuffer);
+        return new Promise((resolve) => {
+            const xAxis = audioData.xAxis;
+            const maxLines = Math.min(requestedMaxLines, audioData.frequencyData.length);
+            const series = audioData.frequencyData.slice(0, maxLines).map((frame, index) => {
+                return frame.map((value, i) => {
+                    return (value += 255 * index);
+                });
+            });
+            resolve({ xAxis, series });
+        });
     }
 }

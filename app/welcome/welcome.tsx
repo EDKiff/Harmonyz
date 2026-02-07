@@ -4,12 +4,13 @@ import { PosterGenerator } from "../renderer/PosterGenerator";
 import { FileDetails } from "./FileDetails";
 import { AudioAnalysisParameters } from "./AudioAnalysisParameters";
 import { RendererParameters } from "./RendererParameters";
+import { LineChart, type LineSeries } from "@mui/x-charts";
 
 export function Welcome() {
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
     const [isGenerating, setIsGenerating] = useState(false);
-    const [generatedPoster, setGeneratedPoster] = useState<string | null>(null);
+    const [generatedPoster, setGeneratedPoster] = useState<boolean>(false);
     const posterGenerator = useRef(new PosterGenerator());
     const [parameters, setParameters] = useState({
         fftSize: 2048,
@@ -24,6 +25,8 @@ export function Welcome() {
         amplify: 1,
         smoothing: 2,
     });
+    const [xAxis, setXAxis] = useState<number[]>([]);
+    const [seriesData, setSeriesData] = useState<Array<LineSeries>>([]);
 
     const handleButtonClick = () => {
         fileInputRef.current?.click();
@@ -41,15 +44,28 @@ export function Welcome() {
 
         setIsGenerating(true);
         try {
-            const posterUrl = await posterGenerator.current.generate(
+            const { xAxis, series } = await posterGenerator.current.generate(
                 selectedFile,
-                parameters.fftSize,
-                parameters.smoothingTimeConstant,
-                parameters.minDecibels,
-                parameters.maxDecibels,
-                rendererParameters,
+                rendererParameters.lineCount,
+                {
+                    fftSize: parameters.fftSize,
+                    smoothingTimeConstant: parameters.smoothingTimeConstant,
+                    minDecibels: parameters.minDecibels,
+                    maxDecibels: parameters.maxDecibels,
+                    durationBetweenLines: 0.5,
+                    maxFrequency: 4000,
+                },
             );
-            setGeneratedPoster(posterUrl);
+            setGeneratedPoster(true);
+            // Update xAxis with new data based on poster generation
+            setXAxis(xAxis);
+            console.log("Series data for chart:", series);
+            setSeriesData(
+                series.map((data, index) => ({
+                    data: data.map((value, i) => value),
+                    showMark: false,
+                })),
+            );
         } catch (error) {
             console.error("Failed to generate poster:", error);
         } finally {
@@ -122,15 +138,11 @@ export function Welcome() {
                 </div>
 
                 {generatedPoster && !isGenerating && (
-                    <div className="w-11/12 max-w-250 p-4 mx-4 bg-white dark:bg-gray-800 rounded-lg shadow-md border border-gray-200 dark:border-gray-700">
+                    <div className="w-11/12 max-w-250 p-4 mx-4 bg-white dark:bg-gray-200 rounded-lg shadow-md border border-gray-200 dark:border-gray-700">
                         <h3 className="text-lg font-semibold mb-3 text-gray-800 dark:text-white">
                             Generated Poster
                         </h3>
-                        <img
-                            src={generatedPoster}
-                            alt="Generated Poster"
-                            className="w-full rounded-lg"
-                        />
+                        <LineChart xAxis={[{ data: xAxis }]} series={seriesData} height={1200} />
                     </div>
                 )}
 
