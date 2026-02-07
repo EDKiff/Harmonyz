@@ -1,9 +1,11 @@
 export interface JoyDivisionParameters {
-  lineCount: number;
-  rangeStart: number;
-  rangeEnd: number;
-  amplify: number;
-  smoothing: number;
+    lineCount: number;
+    rangeStart: number;
+    rangeEnd: number;
+    amplify: number;
+    smoothing: number;
+    durationBetweenLines: number;
+    maxFrequency: number;
 }
 
 class Visualizer {

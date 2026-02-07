@@ -24,6 +24,8 @@ export function Welcome() {
         rangeEnd: 1,
         amplify: 1,
         smoothing: 2,
+        durationBetweenLines: 0.5,
+        maxFrequency: 4000,
     });
     const [xAxis, setXAxis] = useState<number[]>([]);
     const [seriesData, setSeriesData] = useState<Array<LineSeries>>([]);
@@ -52,8 +54,8 @@ export function Welcome() {
                     smoothingTimeConstant: parameters.smoothingTimeConstant,
                     minDecibels: parameters.minDecibels,
                     maxDecibels: parameters.maxDecibels,
-                    durationBetweenLines: 0.5,
-                    maxFrequency: 4000,
+                    durationBetweenLines: rendererParameters.durationBetweenLines,
+                    maxFrequency: rendererParameters.maxFrequency,
                 },
             );
             setGeneratedPoster(true);

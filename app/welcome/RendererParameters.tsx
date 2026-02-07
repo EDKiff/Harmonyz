@@ -6,7 +6,15 @@ interface RendererParametersProps {
 }
 
 export function RendererParameters({ parameters, onParametersChange }: RendererParametersProps) {
-    const { lineCount, rangeStart, rangeEnd, amplify, smoothing } = parameters;
+    const {
+        lineCount,
+        rangeStart,
+        rangeEnd,
+        amplify,
+        smoothing,
+        durationBetweenLines,
+        maxFrequency,
+    } = parameters;
 
     const handleChange = (field: string, value: number) => {
         onParametersChange({
@@ -111,6 +119,48 @@ export function RendererParameters({ parameters, onParametersChange }: RendererP
                         step="1"
                         value={smoothing}
                         onChange={(e) => handleChange("smoothing", Number(e.target.value))}
+                        className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700"
+                    />
+                </div>
+
+                <div className="flex flex-col gap-2">
+                    <label className="flex justify-between items-center">
+                        <span className="text-sm text-gray-600 dark:text-gray-400">
+                            Duration Between Lines:
+                        </span>
+                        <span className="text-sm font-medium text-gray-900 dark:text-white">
+                            {durationBetweenLines.toFixed(2)}s
+                        </span>
+                    </label>
+                    <input
+                        type="range"
+                        min="0.1"
+                        max="2"
+                        step="0.1"
+                        value={durationBetweenLines}
+                        onChange={(e) =>
+                            handleChange("durationBetweenLines", Number(e.target.value))
+                        }
+                        className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700"
+                    />
+                </div>
+
+                <div className="flex flex-col gap-2">
+                    <label className="flex justify-between items-center">
+                        <span className="text-sm text-gray-600 dark:text-gray-400">
+                            Max Frequency:
+                        </span>
+                        <span className="text-sm font-medium text-gray-900 dark:text-white">
+                            {maxFrequency} Hz
+                        </span>
+                    </label>
+                    <input
+                        type="range"
+                        min="1000"
+                        max="20000"
+                        step="100"
+                        value={maxFrequency}
+                        onChange={(e) => handleChange("maxFrequency", Number(e.target.value))}
                         className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700"
                     />
                 </div>
