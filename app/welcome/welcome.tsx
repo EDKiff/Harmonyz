@@ -5,6 +5,7 @@ import { FileDetails } from "./FileDetails";
 import { AudioAnalysisParameters } from "./AudioAnalysisParameters";
 import { RendererParameters } from "./RendererParameters";
 import { LineChart, type LineSeries } from "@mui/x-charts";
+import { NOTES } from "~/notes/Notes";
 
 export function Welcome() {
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -144,7 +145,23 @@ export function Welcome() {
                         <h3 className="text-lg font-semibold mb-3 text-gray-800 dark:text-white">
                             Generated Poster
                         </h3>
-                        <LineChart xAxis={[{ data: xAxis }]} series={seriesData} height={1200} />
+                        <LineChart
+                            xAxis={[
+                                {
+                                    data: Array.from(NOTES.keys()),
+                                    label: "Frequency (Hz)",
+                                    scaleType: "band",
+                                    tickMinStep: 0.01,
+                                    valueFormatter: (value: number) => {
+                                        const note = NOTES.get(value);
+                                        return `${note?.alphabetic}${note?.octave}`;
+                                    },
+                                },
+                            ]}
+                            yAxis={[{ label: "Seconds" }]}
+                            series={seriesData}
+                            height={1200}
+                        />
                     </div>
                 )}
 
