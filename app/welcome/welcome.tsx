@@ -30,7 +30,7 @@ export function Welcome() {
         maxFrequency: 4000,
     });
     const [xAxis, setXAxis] = useState<number[]>([]);
-    const [seriesData, setSeriesData] = useState<Array<LineSeries>>([]);
+    const [seriesData, setSeriesData] = useState<Array<Array<number>>>([]);
 
     const handleButtonClick = () => {
         fileInputRef.current?.click();
@@ -64,12 +64,7 @@ export function Welcome() {
             // Update xAxis with new data based on poster generation
             setXAxis(xAxis);
             console.log("Series data for chart:", series);
-            setSeriesData(
-                series.map((data, index) => ({
-                    data: data.map((value, i) => value),
-                    showMark: false,
-                })),
-            );
+            setSeriesData(series);
         } catch (error) {
             console.error("Failed to generate poster:", error);
         } finally {
@@ -150,24 +145,10 @@ export function Welcome() {
                             xAxisData={Array.from(NOTES.entries())
                                 .sort(([freqA], [freqB]) => freqA - freqB)
                                 .map(([frequency, note]) => ({ frequency, note }))}
-                            yAxisData={null}
-                        />
-                        <LineChart
-                            xAxis={[
-                                {
-                                    data: Array.from(NOTES.keys()),
-                                    label: "Frequency (Hz)",
-                                    scaleType: "band",
-                                    tickMinStep: 0.01,
-                                    valueFormatter: (value: number) => {
-                                        const note = NOTES.get(value);
-                                        return `${note?.alphabetic}${note?.octave}`;
-                                    },
-                                },
-                            ]}
-                            yAxis={[{ label: "Seconds" }]}
-                            series={seriesData}
-                            height={1200}
+                            yAxisData={seriesData.map((series, index) => ({
+                                timestamp: index,
+                                frequencyData: series,
+                            }))}
                         />
                     </div>
                 )}
