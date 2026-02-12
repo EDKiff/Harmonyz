@@ -5,7 +5,8 @@ import { FileDetails } from "./FileDetails";
 import { AudioAnalysisParameters } from "./AudioAnalysisParameters";
 import { RendererParameters } from "./RendererParameters";
 import { LineChart, type LineSeries } from "@mui/x-charts";
-import { NOTES } from "~/notes/Notes";
+import { NOTES, type Notes } from "~/notes/Notes";
+import PosterComponent from "~/renderer/PosterComponent";
 
 export function Welcome() {
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -141,10 +142,16 @@ export function Welcome() {
                 </div>
 
                 {generatedPoster && !isGenerating && (
-                    <div className="w-11/12 max-w-250 p-4 mx-4 bg-white dark:bg-gray-200 rounded-lg shadow-md border border-gray-200 dark:border-gray-700">
+                    <div className="w-11/12 p-4 mx-4 bg-white dark:bg-gray-200 rounded-lg shadow-md border border-gray-200 dark:border-gray-700">
                         <h3 className="text-lg font-semibold mb-3 text-gray-800 dark:text-white">
                             Generated Poster
                         </h3>
+                        <PosterComponent
+                            xAxisData={Array.from(NOTES.entries())
+                                .sort(([freqA], [freqB]) => freqA - freqB)
+                                .map(([frequency, note]) => ({ frequency, note }))}
+                            yAxisData={null}
+                        />
                         <LineChart
                             xAxis={[
                                 {
