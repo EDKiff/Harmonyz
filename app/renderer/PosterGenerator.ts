@@ -17,17 +17,7 @@ export class PosterGenerator {
         return new Promise((resolve) => {
             const xAxis = audioData.xAxis;
             const maxLines = Math.min(requestedMaxLines, audioData.frequencyData.length);
-
-            const durationBetweenLines = audioAnalyzerParams.durationBetweenLines;
-
-
-            const series = audioData.frequencyData.slice(0, maxLines).map((frame, index) => {
-                return frame.map((value) => {
-                    const valueInSeconds = (value * durationBetweenLines) / 255;
-                    const valueInSecondsWithOffset = valueInSeconds + index * durationBetweenLines;
-                    return valueInSecondsWithOffset;
-                });
-            });
+            const series = audioData.frequencyData.slice(0, maxLines);
             resolve({ xAxis, series });
         });
     }

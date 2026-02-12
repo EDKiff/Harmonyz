@@ -40,22 +40,22 @@ const PosterComponent: React.FC<PosterComponentProps> = ({ xAxisData, yAxisData 
         let maxY = -Infinity;
         yAxisData.forEach(({ timestamp, frequencyData }) => {
             frequencyData.forEach((value) => {
-                const yValue = timestamp + value;
+                const normalizedAmplitude = value / 255;
+                const yValue = timestamp + normalizedAmplitude;
                 minY = Math.min(minY, yValue);
                 maxY = Math.max(maxY, yValue);
             });
         });
 
         // Add some padding to the y-axis range
-        const yRange = maxY - minY || 1;
-        const yPadding = yRange * 0.1;
+        const yPadding = 2;
         minY -= yPadding;
         maxY += yPadding;
 
         // Function to map y value to canvas coordinates
         const mapY = (yValue: number) => {
             const normalizedY = (yValue - minY) / (maxY - minY);
-            return height - padding - normalizedY * (height - 2 * padding);
+            return normalizedY * height;
         };
 
         // Function to map x index to canvas coordinates
@@ -70,8 +70,9 @@ const PosterComponent: React.FC<PosterComponentProps> = ({ xAxisData, yAxisData 
             ctx.beginPath();
 
             frequencyData.forEach((amplitude, frequency) => {
+                const normalizedAmplitude = amplitude / 255;
                 const x = mapX(frequency, frequencyData.length);
-                const y = mapY(timestamp + amplitude);
+                const y = mapY(timestamp + normalizedAmplitude);
 
                 // Draw Y axis tick and label for each data point
                 if (frequency === 0) {
@@ -82,12 +83,14 @@ const PosterComponent: React.FC<PosterComponentProps> = ({ xAxisData, yAxisData 
                     ctx.stroke();
 
                     // Draw label
-                    ctx.fillText((timestamp + amplitude).toFixed(1), padding - 15, y);
+                    ctx.fillText(timestamp.toFixed(1), padding - 15, y);
 
                     ctx.strokeStyle = `hsl(${(dataIndex * 360) / yAxisData.length}, 70%, 50%)`;
                     ctx.moveTo(x, y);
                 } else {
-                    ctx.lineTo(x, y);
+                    if (normalizedAmplitude > 0.3) {
+                        ctx.lineTo(x, y);
+                    }
                 }
             });
 

@@ -137,7 +137,7 @@ export function Welcome() {
                 </div>
 
                 {generatedPoster && !isGenerating && (
-                    <div className="w-11/12 p-4 mx-4 bg-white dark:bg-gray-200 rounded-lg shadow-md border border-gray-200 dark:border-gray-700">
+                    <div className="p-4 mx-4 bg-white dark:bg-gray-200 rounded-lg shadow-md border border-gray-200 dark:border-gray-700">
                         <h3 className="text-lg font-semibold mb-3 text-gray-800 dark:text-white">
                             Generated Poster
                         </h3>
