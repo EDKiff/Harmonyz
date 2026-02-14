@@ -94,7 +94,6 @@ const PosterComponent: React.FC<PosterComponentProps> = ({ xAxisData, yAxisData 
             ctx.beginPath();
 
             frequencyData.forEach((amplitude, frequency) => {
-                const normalizedAmplitude = amplitude / 255;
                 const x = mapX(frequency, frequencyData.length);
                 const y = mapY(timestamp);
 
@@ -121,7 +120,7 @@ const PosterComponent: React.FC<PosterComponentProps> = ({ xAxisData, yAxisData 
             <canvas
                 ref={canvasRef}
                 width={1080}
-                height={1920}
+                height={1080}
                 style={{ backgroundColor: "rgb(29, 29, 43)" }}
             />
         </div>
