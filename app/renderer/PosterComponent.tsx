@@ -13,6 +13,7 @@ export type PosterComponentParameters = {
 };
 
 interface PosterComponentProps {
+    yAxisDataStepInSeconds: number;
     xAxisData: Array<number>;
     yAxisData: Array<YAxisData>;
     displayableNotes: Array<Notes>;
@@ -20,6 +21,7 @@ interface PosterComponentProps {
 }
 
 const PosterComponent: React.FC<PosterComponentProps> = ({
+    yAxisDataStepInSeconds,
     xAxisData,
     yAxisData,
     displayableNotes,
@@ -118,21 +120,16 @@ const PosterComponent: React.FC<PosterComponentProps> = ({
             ctx.lineWidth = 2;
             ctx.beginPath();
 
-            frequencyData.forEach((amplitude, frequency) => {
-                const y = mapY(timestamp);
+            const y = mapY(timestamp);
+            // Draw tick mark
+            ctx.beginPath();
+            ctx.moveTo(padding - 5, y);
+            ctx.lineTo(padding, y);
+            ctx.stroke();
 
-                // Draw Y axis tick and label for each data point
-                if (frequency === 0) {
-                    // Draw tick mark
-                    ctx.beginPath();
-                    ctx.moveTo(padding - 5, y);
-                    ctx.lineTo(padding, y);
-                    ctx.stroke();
+            // Draw label
+            ctx.fillText((timestamp * yAxisDataStepInSeconds).toFixed(1), padding - 15, y);
 
-                    // Draw label
-                    ctx.fillText(timestamp.toFixed(1), padding - 15, y);
-                }
-            });
             drawLine(ctx, frequencyData, mapY(timestamp), padding, barWidth);
 
             ctx.stroke();

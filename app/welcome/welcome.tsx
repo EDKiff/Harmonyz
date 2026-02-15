@@ -133,6 +133,7 @@ export function Welcome() {
                             Generated Poster
                         </h3>
                         <PosterComponent
+                            yAxisDataStepInSeconds={audioAnalyzerParams.durationBetweenLines}
                             xAxisData={xAxis}
                             yAxisData={seriesData.map((series, index) => ({
                                 timestamp: index,
