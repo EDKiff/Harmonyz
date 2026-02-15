@@ -4,10 +4,8 @@ import { PosterGenerator } from "../renderer/PosterGenerator";
 import { FileDetails } from "./FileDetails";
 import { AudioAnalysisParameters } from "./AudioAnalysisParameters";
 import { RendererParameters } from "./RendererParameters";
-import { LineChart, type LineSeries } from "@mui/x-charts";
-import { NOTES, type Notes } from "~/notes/Notes";
+import { NOTES } from "~/notes/Notes";
 import PosterComponent, { type PosterComponentParameters } from "~/renderer/PosterComponent";
-import { type JoyDivisionParameters } from "~/renderer/Visualizer";
 import type { AudioAnalyzerParameters } from "~/renderer/AudioAnalyzer";
 
 export function Welcome() {
