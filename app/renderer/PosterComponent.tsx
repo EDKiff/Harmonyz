@@ -75,11 +75,6 @@ const PosterComponent: React.FC<PosterComponentProps> = ({
             return normalizedY * height;
         };
 
-        // Function to map x index to canvas coordinates
-        const mapX = (index: number, totalLength: number) => {
-            return padding + (index / (totalLength - 1 || 1)) * (width - 2 * padding);
-        };
-
         //Ticks context
         ctx.font = "8px Arial";
         ctx.textAlign = "center";
@@ -99,7 +94,7 @@ const PosterComponent: React.FC<PosterComponentProps> = ({
                 ((note.frequency - filteredXAxisData[0]) * (width - 2 * padding)) /
                     (filteredXAxisData[filteredXAxisData.length - 1] - filteredXAxisData[0]);
             if (x < padding || x > width - padding) return;
-            ctx.fillText(note.alphabetic, x + barWidth / 2, height - padding + 35);
+            ctx.fillText(note.alphabetic + note.octave, x + barWidth / 2, height - padding + 35);
         });
 
         // Draw axes
