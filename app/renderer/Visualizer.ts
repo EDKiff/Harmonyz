@@ -4,7 +4,6 @@ export interface JoyDivisionParameters {
     rangeEnd: number;
     amplify: number;
     smoothing: number;
-    durationBetweenLines: number;
     maxFrequency: number;
 }
 

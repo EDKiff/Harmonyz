@@ -1,20 +1,12 @@
-import type { JoyDivisionParameters } from "~/renderer/Visualizer";
+import type { PosterComponentParameters } from "~/renderer/PosterComponent";
 
 interface RendererParametersProps {
-    parameters: JoyDivisionParameters;
-    onParametersChange: (params: JoyDivisionParameters) => void;
+    parameters: PosterComponentParameters;
+    onParametersChange: (params: PosterComponentParameters) => void;
 }
 
 export function RendererParameters({ parameters, onParametersChange }: RendererParametersProps) {
-    const {
-        lineCount,
-        rangeStart,
-        rangeEnd,
-        amplify,
-        smoothing,
-        durationBetweenLines,
-        maxFrequency,
-    } = parameters;
+    const { lineCount, minFrequency, maxFrequency } = parameters;
 
     const handleChange = (field: string, value: number) => {
         onParametersChange({
@@ -52,95 +44,19 @@ export function RendererParameters({ parameters, onParametersChange }: RendererP
                 <div className="flex flex-col gap-2">
                     <label className="flex justify-between items-center">
                         <span className="text-sm text-gray-600 dark:text-gray-400">
-                            Range Start:
+                            Min Frequency:
                         </span>
                         <span className="text-sm font-medium text-gray-900 dark:text-white">
-                            {rangeStart.toFixed(2)}
+                            {minFrequency} Hz
                         </span>
                     </label>
                     <input
                         type="range"
-                        min="0"
-                        max="0.5"
-                        step="0.01"
-                        value={rangeStart}
-                        onChange={(e) => handleChange("rangeStart", Number(e.target.value))}
-                        className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700"
-                    />
-                </div>
-
-                <div className="flex flex-col gap-2">
-                    <label className="flex justify-between items-center">
-                        <span className="text-sm text-gray-600 dark:text-gray-400">Range End:</span>
-                        <span className="text-sm font-medium text-gray-900 dark:text-white">
-                            {rangeEnd.toFixed(2)}
-                        </span>
-                    </label>
-                    <input
-                        type="range"
-                        min="0.5"
-                        max="1"
-                        step="0.01"
-                        value={rangeEnd}
-                        onChange={(e) => handleChange("rangeEnd", Number(e.target.value))}
-                        className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700"
-                    />
-                </div>
-
-                <div className="flex flex-col gap-2">
-                    <label className="flex justify-between items-center">
-                        <span className="text-sm text-gray-600 dark:text-gray-400">Amplify:</span>
-                        <span className="text-sm font-medium text-gray-900 dark:text-white">
-                            {amplify.toFixed(1)}
-                        </span>
-                    </label>
-                    <input
-                        type="range"
-                        min="0.1"
-                        max="5"
-                        step="0.1"
-                        value={amplify}
-                        onChange={(e) => handleChange("amplify", Number(e.target.value))}
-                        className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700"
-                    />
-                </div>
-
-                <div className="flex flex-col gap-2">
-                    <label className="flex justify-between items-center">
-                        <span className="text-sm text-gray-600 dark:text-gray-400">Smoothing:</span>
-                        <span className="text-sm font-medium text-gray-900 dark:text-white">
-                            {smoothing}
-                        </span>
-                    </label>
-                    <input
-                        type="range"
-                        min="0"
-                        max="10"
-                        step="1"
-                        value={smoothing}
-                        onChange={(e) => handleChange("smoothing", Number(e.target.value))}
-                        className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700"
-                    />
-                </div>
-
-                <div className="flex flex-col gap-2">
-                    <label className="flex justify-between items-center">
-                        <span className="text-sm text-gray-600 dark:text-gray-400">
-                            Duration Between Lines:
-                        </span>
-                        <span className="text-sm font-medium text-gray-900 dark:text-white">
-                            {durationBetweenLines.toFixed(2)}s
-                        </span>
-                    </label>
-                    <input
-                        type="range"
-                        min="0.1"
-                        max="2"
-                        step="0.1"
-                        value={durationBetweenLines}
-                        onChange={(e) =>
-                            handleChange("durationBetweenLines", Number(e.target.value))
-                        }
+                        min="20"
+                        max="5000"
+                        step="10"
+                        value={minFrequency}
+                        onChange={(e) => handleChange("minFrequency", Number(e.target.value))}
                         className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700"
                     />
                 </div>

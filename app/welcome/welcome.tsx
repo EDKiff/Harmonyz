@@ -6,7 +6,9 @@ import { AudioAnalysisParameters } from "./AudioAnalysisParameters";
 import { RendererParameters } from "./RendererParameters";
 import { LineChart, type LineSeries } from "@mui/x-charts";
 import { NOTES, type Notes } from "~/notes/Notes";
-import PosterComponent from "~/renderer/PosterComponent";
+import PosterComponent, { type PosterComponentParameters } from "~/renderer/PosterComponent";
+import { type JoyDivisionParameters } from "~/renderer/Visualizer";
+import type { AudioAnalyzerParameters } from "~/renderer/AudioAnalyzer";
 
 export function Welcome() {
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -14,20 +16,17 @@ export function Welcome() {
     const [isGenerating, setIsGenerating] = useState(false);
     const [generatedPoster, setGeneratedPoster] = useState<boolean>(false);
     const posterGenerator = useRef(new PosterGenerator());
-    const [parameters, setParameters] = useState({
+    const [audioAnalyzerParams, setAudioAnalyzerParams] = useState<AudioAnalyzerParameters>({
         fftSize: 2048,
         smoothingTimeConstant: 0.5,
         minDecibels: -100,
         maxDecibels: -30,
-    });
-    const [rendererParameters, setRendererParameters] = useState({
-        lineCount: 50,
-        rangeStart: 0,
-        rangeEnd: 1,
-        amplify: 1,
-        smoothing: 2,
         durationBetweenLines: 0.5,
-        maxFrequency: 4000,
+    });
+    const [rendererParameters, setRendererParameters] = useState<PosterComponentParameters>({
+        lineCount: 20,
+        minFrequency: 1500,
+        maxFrequency: 4500,
     });
     const [xAxis, setXAxis] = useState<number[]>([]);
     const [seriesData, setSeriesData] = useState<Array<Array<number>>>([]);
@@ -51,19 +50,11 @@ export function Welcome() {
             const { xAxis, series } = await posterGenerator.current.generate(
                 selectedFile,
                 rendererParameters.lineCount,
-                {
-                    fftSize: parameters.fftSize,
-                    smoothingTimeConstant: parameters.smoothingTimeConstant,
-                    minDecibels: parameters.minDecibels,
-                    maxDecibels: parameters.maxDecibels,
-                    durationBetweenLines: rendererParameters.durationBetweenLines,
-                    maxFrequency: rendererParameters.maxFrequency,
-                },
+                audioAnalyzerParams,
             );
             setGeneratedPoster(true);
             // Update xAxis with new data based on poster generation
             setXAxis(xAxis);
-            console.log("Series data for chart:", series);
             setSeriesData(series);
         } catch (error) {
             console.error("Failed to generate poster:", error);
@@ -109,11 +100,8 @@ export function Welcome() {
                                 </div>
                                 <div className="flex-1">
                                     <AudioAnalysisParameters
-                                        fftSize={parameters.fftSize}
-                                        smoothingTimeConstant={parameters.smoothingTimeConstant}
-                                        minDecibels={parameters.minDecibels}
-                                        maxDecibels={parameters.maxDecibels}
-                                        onParametersChange={setParameters}
+                                        audioAnalyzerParams={audioAnalyzerParams}
+                                        onParametersChange={setAudioAnalyzerParams}
                                     />
                                 </div>
                                 <div className="flex-1">
@@ -151,8 +139,7 @@ export function Welcome() {
                                 frequencyData: series,
                             }))}
                             displayableNotes={NOTES}
-                            minFrequency={1500}
-                            maxFrequency={4500}
+                            parameters={rendererParameters}
                         />
                     </div>
                 )}

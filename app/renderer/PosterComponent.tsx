@@ -6,20 +6,24 @@ type YAxisData = {
     frequencyData: number[];
 };
 
+export type PosterComponentParameters = {
+    lineCount: number;
+    minFrequency: number;
+    maxFrequency: number;
+};
+
 interface PosterComponentProps {
     xAxisData: Array<number>;
     yAxisData: Array<YAxisData>;
     displayableNotes: Array<Notes>;
-    minFrequency: number;
-    maxFrequency: number;
+    parameters: PosterComponentParameters;
 }
 
 const PosterComponent: React.FC<PosterComponentProps> = ({
     xAxisData,
     yAxisData,
     displayableNotes,
-    minFrequency,
-    maxFrequency,
+    parameters,
 }) => {
     const canvasRef = useRef<HTMLCanvasElement>(null);
 
@@ -37,12 +41,14 @@ const PosterComponent: React.FC<PosterComponentProps> = ({
 
         //Set up axis data
         const filteredXAxisData = xAxisData.filter(
-            (freq) => freq >= minFrequency && freq <= maxFrequency,
+            (freq) => freq >= parameters.minFrequency && freq <= parameters.maxFrequency,
         );
         const filteredYAxisData = yAxisData.map(({ timestamp, frequencyData }) => ({
             timestamp,
             frequencyData: frequencyData.filter(
-                (_, index) => xAxisData[index] >= minFrequency && xAxisData[index] <= maxFrequency,
+                (_, index) =>
+                    xAxisData[index] >= parameters.minFrequency &&
+                    xAxisData[index] <= parameters.maxFrequency,
             ),
         }));
 

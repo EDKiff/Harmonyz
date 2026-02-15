@@ -9,7 +9,6 @@ export type AudioAnalyzerParameters = {
     minDecibels: number;
     maxDecibels: number;
     durationBetweenLines: number; // Durée entre chaque ligne du spectre en secondes
-    maxFrequency: number; // Fréquence maximale à analyser en Hz
 };
 
 class AudioAnalyzer {
@@ -19,7 +18,6 @@ class AudioAnalyzer {
     private minDecibels: number;
     private maxDecibels: number;
     private durationBetweenLines: number; // Durée entre chaque ligne du spectre en secondes
-    private maxFrequency: number; // Fréquence maximale à analyser en Hz
 
     constructor(
         params: AudioAnalyzerParameters = {
@@ -28,7 +26,6 @@ class AudioAnalyzer {
             minDecibels: -90,
             maxDecibels: -10,
             durationBetweenLines: 0.5,
-            maxFrequency: 4000,
         },
     ) {
         this.audioContext = new window.AudioContext();
@@ -37,7 +34,6 @@ class AudioAnalyzer {
         this.minDecibels = params.minDecibels;
         this.maxDecibels = params.maxDecibels;
         this.durationBetweenLines = params.durationBetweenLines;
-        this.maxFrequency = params.maxFrequency;
     }
 
     // Analyse seconde par seconde le spectrum de l'audio
