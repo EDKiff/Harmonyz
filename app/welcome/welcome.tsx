@@ -25,6 +25,9 @@ export function Welcome() {
         lineCount: 20,
         minFrequency: 1500,
         maxFrequency: 4500,
+        axisColor: "grey",
+        dataLinesWidth: 4,
+        axisFont: "Arial",
     });
     const [xAxis, setXAxis] = useState<number[]>([]);
     const [seriesData, setSeriesData] = useState<Array<Array<number>>>([]);

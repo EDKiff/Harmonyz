@@ -10,6 +10,9 @@ export type PosterComponentParameters = {
     lineCount: number;
     minFrequency: number;
     maxFrequency: number;
+    axisColor: string;
+    dataLinesWidth: number;
+    axisFont: string;
 };
 
 interface PosterComponentProps {
@@ -39,7 +42,6 @@ const PosterComponent: React.FC<PosterComponentProps> = ({
         // Clear canvas
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         ctx.strokeStyle = `grey`;
-        ctx.fillStyle = `grey`;
 
         //Set up axis data
         const filteredXAxisData = xAxisData.filter(
@@ -57,7 +59,7 @@ const PosterComponent: React.FC<PosterComponentProps> = ({
         // Set up drawing parameters
         const width = canvas.width;
         const height = canvas.height;
-        const padding = 40;
+        const padding = 50;
         const barWidth = (width - 2 * padding) / filteredXAxisData.length;
 
         // Find min and max y values for scaling
@@ -73,9 +75,8 @@ const PosterComponent: React.FC<PosterComponentProps> = ({
         });
 
         // Add some padding to the y-axis range
-        const yPadding = 2;
-        minY -= yPadding;
-        maxY += yPadding;
+        minY -= 1.2;
+        maxY += 0.5;
 
         // Function to map y value to canvas coordinates
         const mapY = (yValue: number) => {
@@ -83,16 +84,17 @@ const PosterComponent: React.FC<PosterComponentProps> = ({
             return normalizedY * height;
         };
 
-        //Ticks context
-        ctx.font = "8px Arial";
+        ctx.strokeStyle = parameters.axisColor;
+        ctx.fillStyle = parameters.axisColor;
+        ctx.font = `15px ${parameters.axisFont}`;
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
         // Draw X axis ticks
         filteredXAxisData.forEach((frequency, index) => {
             const x = padding + index * barWidth;
             if (frequency % 20 === 0) {
-                // Draw note label
-                ctx.fillText(frequency.toString(), x + barWidth / 2, height - padding + 20);
+                // Draw frequency value
+                //ctx.fillText(frequency.toString(), x + barWidth / 2, height - padding + 20);
             }
         });
         displayableNotes.forEach((note) => {
@@ -102,11 +104,10 @@ const PosterComponent: React.FC<PosterComponentProps> = ({
                 ((note.frequency - filteredXAxisData[0]) * (width - 2 * padding)) /
                     (filteredXAxisData[filteredXAxisData.length - 1] - filteredXAxisData[0]);
             if (x < padding || x > width - padding) return;
-            ctx.fillText(note.alphabetic + note.octave, x + barWidth / 2, height - padding + 35);
+            ctx.fillText(note.alphabetic + note.octave, x + barWidth / 2, height - padding + 25);
         });
 
         // Draw axes
-        ctx.strokeStyle = "#000";
         ctx.lineWidth = 1;
         ctx.beginPath();
         ctx.moveTo(padding, height - padding);
@@ -116,19 +117,14 @@ const PosterComponent: React.FC<PosterComponentProps> = ({
         ctx.stroke();
 
         // Draw lines for each yAxisData
-        filteredYAxisData.forEach(({ timestamp, frequencyData }, dataIndex) => {
-            ctx.lineWidth = 2;
+        filteredYAxisData.forEach(({ timestamp, frequencyData }) => {
+            ctx.lineWidth = parameters.dataLinesWidth;
             ctx.beginPath();
 
             const y = mapY(timestamp);
-            // Draw tick mark
-            ctx.beginPath();
-            ctx.moveTo(padding - 5, y);
-            ctx.lineTo(padding, y);
-            ctx.stroke();
 
             // Draw label
-            ctx.fillText((timestamp * yAxisDataStepInSeconds).toFixed(1), padding - 15, y);
+            ctx.fillText((timestamp * yAxisDataStepInSeconds).toFixed(1), padding - 25, y);
 
             drawLine(ctx, frequencyData, mapY(timestamp), padding, barWidth);
 
@@ -140,8 +136,8 @@ const PosterComponent: React.FC<PosterComponentProps> = ({
         <div className="poster-container">
             <canvas
                 ref={canvasRef}
-                width={1080}
-                height={1080}
+                width={600}
+                height={900}
                 style={{ backgroundColor: "rgb(29, 29, 43)" }}
             />
         </div>
@@ -162,10 +158,9 @@ const drawLine = (
 
     ctx.lineJoin = "round";
     ctx.lineCap = "round";
-    ctx.lineWidth = 2;
 
     const grad = ctx.createLinearGradient(baselineX, baselineY, baselineX, baselineY - lineHeight);
-    grad.addColorStop(0.6, "#BAB2A9");
+    grad.addColorStop(0.4, "#BAB2A9");
     grad.addColorStop(1, "#FFBD33");
     ctx.strokeStyle = grad;
 
