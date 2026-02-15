@@ -78,15 +78,10 @@ class AudioAnalyzer {
         const intervalInSeconds = this.durationBetweenLines;
         const byteFrequencyDataForInterval = new Array<Array<number>>();
 
-        // Calcul de la frequence maximale pour limiter l'affichage à x Hz maximum
-        const maxFrequencyBin = Math.round(
-            (analyzer.frequencyBinCount / audioBuffer.sampleRate) * this.maxFrequency,
-        );
-
         //Premiere enregistrement sont les valeurs de l'axe x
         console.log("Found audioBuffer.sampleRate:", audioBuffer.sampleRate);
         const xAxis = new Array<number>();
-        for (let i = 0; i < maxFrequencyBin; i++) {
+        for (let i = 0; i < analyzer.frequencyBinCount; i++) {
             const freqValue = i * (audioBuffer.sampleRate / analyzer.frequencyBinCount);
             xAxis.push(freqValue);
         }
@@ -96,7 +91,7 @@ class AudioAnalyzer {
                 const dataArray = new Uint8Array(analyzer.frequencyBinCount);
                 //We could use getFloatFrequencyData for more precision but it is more expensive to compute
                 analyzer.getByteFrequencyData(dataArray);
-                byteFrequencyDataForInterval.push(Array.from(dataArray).splice(0, maxFrequencyBin));
+                byteFrequencyDataForInterval.push(Array.from(dataArray));
                 offlineCtx.resume();
             });
         }

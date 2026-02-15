@@ -6,17 +6,17 @@ type YAxisData = {
     frequencyData: number[];
 };
 
-type XAxisData = {
-    frequency: number;
-    note: Notes;
-};
-
 interface PosterComponentProps {
-    xAxisData: Array<XAxisData>;
+    xAxisData: Array<number>;
     yAxisData: Array<YAxisData>;
+    displayableNotes: Array<Notes>;
 }
 
-const PosterComponent: React.FC<PosterComponentProps> = ({ xAxisData, yAxisData }) => {
+const PosterComponent: React.FC<PosterComponentProps> = ({
+    xAxisData,
+    yAxisData,
+    displayableNotes,
+}) => {
     const canvasRef = useRef<HTMLCanvasElement>(null);
 
     useEffect(() => {
@@ -70,12 +70,20 @@ const PosterComponent: React.FC<PosterComponentProps> = ({ xAxisData, yAxisData 
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
         // Draw X axis ticks
-        xAxisData.forEach((data, index) => {
+        xAxisData.forEach((frequency, index) => {
             const x = padding + index * barWidth;
-            if (!data.note.isSharp()) {
+            if (frequency % 20 === 0) {
                 // Draw note label
-                ctx.fillText(data.note.solmization, x + barWidth / 2, height - padding + 20);
+                ctx.fillText(frequency.toString(), x + barWidth / 2, height - padding + 20);
             }
+        });
+        displayableNotes.forEach((note) => {
+            if (note.isSharp()) return;
+            const x =
+                padding +
+                (note.frequency * (width - 2 * padding)) / xAxisData[xAxisData.length - 1];
+            if (x < padding || x > width - padding) return;
+            ctx.fillText(note.alphabetic, x + barWidth / 2, height - padding + 35);
         });
 
         // Draw axes
@@ -94,7 +102,6 @@ const PosterComponent: React.FC<PosterComponentProps> = ({ xAxisData, yAxisData 
             ctx.beginPath();
 
             frequencyData.forEach((amplitude, frequency) => {
-                const x = mapX(frequency, frequencyData.length);
                 const y = mapY(timestamp);
 
                 // Draw Y axis tick and label for each data point
@@ -186,15 +193,6 @@ const drawLine = (
         previousPointX = endX;
         previousPointY = endY;
         previousAmplitude = normalizeAmplitude(amplitude);
-        console.log("debug", {
-            firstPointX,
-            firstPointY,
-            secondPointX,
-            secondPointY,
-            endX,
-            endY,
-            amplitudeDifference,
-        });
         ctx.stroke();
     });
 };

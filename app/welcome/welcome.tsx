@@ -142,14 +142,12 @@ export function Welcome() {
                             Generated Poster
                         </h3>
                         <PosterComponent
-                            xAxisData={Array.from(NOTES.entries())
-                                .sort(([freqA], [freqB]) => freqA - freqB)
-                                .map(([frequency, note]) => ({ frequency, note }))}
+                            xAxisData={xAxis}
                             yAxisData={seriesData.map((series, index) => ({
                                 timestamp: index,
                                 frequencyData: series,
                             }))}
-                        />
+                            displayableNotes={NOTES}                        />
                     </div>
                 )}
 
