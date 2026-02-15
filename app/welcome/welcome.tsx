@@ -147,7 +147,10 @@ export function Welcome() {
                                 timestamp: index,
                                 frequencyData: series,
                             }))}
-                            displayableNotes={NOTES}                        />
+                            displayableNotes={NOTES}
+                            minFrequency={1500}
+                            maxFrequency={4500}
+                        />
                     </div>
                 )}
 

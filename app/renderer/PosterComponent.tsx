@@ -10,12 +10,16 @@ interface PosterComponentProps {
     xAxisData: Array<number>;
     yAxisData: Array<YAxisData>;
     displayableNotes: Array<Notes>;
+    minFrequency: number;
+    maxFrequency: number;
 }
 
 const PosterComponent: React.FC<PosterComponentProps> = ({
     xAxisData,
     yAxisData,
     displayableNotes,
+    minFrequency,
+    maxFrequency,
 }) => {
     const canvasRef = useRef<HTMLCanvasElement>(null);
 
@@ -31,16 +35,27 @@ const PosterComponent: React.FC<PosterComponentProps> = ({
         ctx.strokeStyle = `grey`;
         ctx.fillStyle = `grey`;
 
+        //Set up axis data
+        const filteredXAxisData = xAxisData.filter(
+            (freq) => freq >= minFrequency && freq <= maxFrequency,
+        );
+        const filteredYAxisData = yAxisData.map(({ timestamp, frequencyData }) => ({
+            timestamp,
+            frequencyData: frequencyData.filter(
+                (_, index) => xAxisData[index] >= minFrequency && xAxisData[index] <= maxFrequency,
+            ),
+        }));
+
         // Set up drawing parameters
         const width = canvas.width;
         const height = canvas.height;
         const padding = 40;
-        const barWidth = (width - 2 * padding) / xAxisData.length;
+        const barWidth = (width - 2 * padding) / filteredXAxisData.length;
 
         // Find min and max y values for scaling
         let minY = Infinity;
         let maxY = -Infinity;
-        yAxisData.forEach(({ timestamp, frequencyData }) => {
+        filteredYAxisData.forEach(({ timestamp, frequencyData }) => {
             frequencyData.forEach((value) => {
                 const normalizedAmplitude = value / 255;
                 const yValue = timestamp + normalizedAmplitude;
@@ -70,7 +85,7 @@ const PosterComponent: React.FC<PosterComponentProps> = ({
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
         // Draw X axis ticks
-        xAxisData.forEach((frequency, index) => {
+        filteredXAxisData.forEach((frequency, index) => {
             const x = padding + index * barWidth;
             if (frequency % 20 === 0) {
                 // Draw note label
@@ -81,7 +96,8 @@ const PosterComponent: React.FC<PosterComponentProps> = ({
             if (note.isSharp()) return;
             const x =
                 padding +
-                (note.frequency * (width - 2 * padding)) / xAxisData[xAxisData.length - 1];
+                ((note.frequency - filteredXAxisData[0]) * (width - 2 * padding)) /
+                    (filteredXAxisData[filteredXAxisData.length - 1] - filteredXAxisData[0]);
             if (x < padding || x > width - padding) return;
             ctx.fillText(note.alphabetic, x + barWidth / 2, height - padding + 35);
         });
@@ -97,7 +113,7 @@ const PosterComponent: React.FC<PosterComponentProps> = ({
         ctx.stroke();
 
         // Draw lines for each yAxisData
-        yAxisData.forEach(({ timestamp, frequencyData }, dataIndex) => {
+        filteredYAxisData.forEach(({ timestamp, frequencyData }, dataIndex) => {
             ctx.lineWidth = 2;
             ctx.beginPath();
 
