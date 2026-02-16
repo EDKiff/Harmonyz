@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from "react";
+import { useEffect, useRef } from "react";
 import type { Notes } from "~/notes/Notes";
 
 type YAxisData = {
@@ -13,6 +13,9 @@ export type PosterComponentParameters = {
     axisColor: string;
     dataLinesWidth: number;
     axisFont: string;
+    strokeColor: string;
+    strokeAccentColor: string;
+    backgroundColor: string;
 };
 
 interface PosterComponentProps {
@@ -21,29 +24,41 @@ interface PosterComponentProps {
     yAxisData: Array<YAxisData>;
     displayableNotes: Array<Notes>;
     parameters: PosterComponentParameters;
+    canvasId: string;
+    canvasWidth: number;
+    canvasHeight: number;
 }
 
-const PosterComponent: React.FC<PosterComponentProps> = ({
+const PosterComponent = ({
     yAxisDataStepInSeconds,
     xAxisData,
     yAxisData,
     displayableNotes,
     parameters,
-}) => {
+    canvasId,
+    canvasWidth,
+    canvasHeight,
+}: PosterComponentProps) => {
     const canvasRef = useRef<HTMLCanvasElement>(null);
 
     useEffect(() => {
         const canvas = canvasRef.current;
-        if (!canvas || xAxisData.length === 0) return;
+        if (!canvas) return;
+        if (xAxisData.length === 0 || yAxisData.length === 0) return;
 
         const ctx = canvas.getContext("2d");
         if (!ctx) return;
 
-        // Clear canvas
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        ctx.strokeStyle = `grey`;
+        // Set up drawing parameters
+        const width = canvas.width;
+        const height = canvas.height;
 
-        //Set up axis data
+        // Redraw canvas
+        ctx.fillStyle = parameters.backgroundColor;
+        ctx.fillRect(0, 0, width, height);
+       
+
+        // Set up axis data
         const filteredXAxisData = xAxisData.filter(
             (freq) => freq >= parameters.minFrequency && freq <= parameters.maxFrequency,
         );
@@ -56,9 +71,6 @@ const PosterComponent: React.FC<PosterComponentProps> = ({
             ),
         }));
 
-        // Set up drawing parameters
-        const width = canvas.width;
-        const height = canvas.height;
         const padding = 50;
         const barWidth = (width - 2 * padding) / filteredXAxisData.length;
 
@@ -73,7 +85,7 @@ const PosterComponent: React.FC<PosterComponentProps> = ({
                 maxY = Math.max(maxY, yValue);
             });
         });
-
+        
         // Add some padding to the y-axis range
         minY -= 1.2;
         maxY += 0.5;
@@ -89,20 +101,15 @@ const PosterComponent: React.FC<PosterComponentProps> = ({
         ctx.font = `15px ${parameters.axisFont}`;
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
-        // Draw X axis ticks
-        filteredXAxisData.forEach((frequency, index) => {
-            const x = padding + index * barWidth;
-            if (frequency % 20 === 0) {
-                // Draw frequency value
-                //ctx.fillText(frequency.toString(), x + barWidth / 2, height - padding + 20);
-            }
-        });
+
+        const minFilteredFrequency = filteredXAxisData[0];
+        const maxFilteredFrequency = filteredXAxisData[filteredXAxisData.length - 1];
+        const frequencyRange = maxFilteredFrequency - minFilteredFrequency;
         displayableNotes.forEach((note) => {
             if (note.isSharp()) return;
             const x =
                 padding +
-                ((note.frequency - filteredXAxisData[0]) * (width - 2 * padding)) /
-                    (filteredXAxisData[filteredXAxisData.length - 1] - filteredXAxisData[0]);
+                ((note.frequency - minFilteredFrequency) * (width - 2 * padding)) / frequencyRange;
             if (x < padding || x > width - padding) return;
             ctx.fillText(note.alphabetic + note.octave, x + barWidth / 2, height - padding + 25);
         });
@@ -119,26 +126,42 @@ const PosterComponent: React.FC<PosterComponentProps> = ({
         // Draw lines for each yAxisData
         filteredYAxisData.forEach(({ timestamp, frequencyData }) => {
             ctx.lineWidth = parameters.dataLinesWidth;
-            ctx.beginPath();
 
             const y = mapY(timestamp);
 
             // Draw label
+            ctx.fillStyle = parameters.axisColor;
             ctx.fillText((timestamp * yAxisDataStepInSeconds).toFixed(1), padding - 25, y);
 
-            drawLine(ctx, frequencyData, mapY(timestamp), padding, barWidth);
-
-            ctx.stroke();
+            drawLine(
+                ctx,
+                frequencyData,
+                mapY(timestamp),
+                padding,
+                barWidth,
+                parameters.strokeColor,
+                parameters.strokeAccentColor,
+            );
         });
-    }, [xAxisData, yAxisData]);
+    }, [
+        displayableNotes,
+        parameters,
+        canvasHeight,
+        canvasWidth,
+        xAxisData,
+        yAxisData,
+        yAxisDataStepInSeconds,
+    ]);
 
     return (
-        <div className="poster-container">
+        <div className="poster-container flex h-full w-full items-center justify-center">
             <canvas
+                id={canvasId}
                 ref={canvasRef}
-                width={600}
-                height={900}
-                style={{ backgroundColor: "rgb(29, 29, 43)" }}
+                width={canvasWidth}
+                height={canvasHeight}
+                className="h-full max-h-full w-auto max-w-full"
+                style={{ backgroundColor: parameters.backgroundColor ?? "rgb(29, 29, 43)" }}
             />
         </div>
     );
@@ -150,6 +173,8 @@ const drawLine = (
     baselineY: number,
     baselineX: number,
     spaceBetweenEachPoints: number,
+    strokeColor: string,
+    strokeAccentColor: string,
 ) => {
     const lineHeight = 50;
 
@@ -160,8 +185,8 @@ const drawLine = (
     ctx.lineCap = "round";
 
     const grad = ctx.createLinearGradient(baselineX, baselineY, baselineX, baselineY - lineHeight);
-    grad.addColorStop(0.4, "#BAB2A9");
-    grad.addColorStop(1, "#FFBD33");
+    grad.addColorStop(0, strokeColor);
+    grad.addColorStop(1, strokeAccentColor);
     ctx.strokeStyle = grad;
 
     let previousPointX = baselineX;

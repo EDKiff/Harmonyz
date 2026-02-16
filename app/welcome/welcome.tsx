@@ -28,6 +28,9 @@ export function Welcome() {
         axisColor: "grey",
         dataLinesWidth: 4,
         axisFont: "Arial",
+        strokeColor: "white",
+        strokeAccentColor: "cyan",
+        backgroundColor: "rgb(29, 29, 43)",
     });
     const [xAxis, setXAxis] = useState<number[]>([]);
     const [seriesData, setSeriesData] = useState<Array<Array<number>>>([]);
@@ -134,6 +137,9 @@ export function Welcome() {
                             Generated Poster
                         </h3>
                         <PosterComponent
+                            canvasId="poster-canvas"
+                            canvasWidth={800}
+                            canvasHeight={600}
                             yAxisDataStepInSeconds={audioAnalyzerParams.durationBetweenLines}
                             xAxisData={xAxis}
                             yAxisData={seriesData.map((series, index) => ({
