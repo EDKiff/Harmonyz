@@ -29,6 +29,7 @@ interface PosterComponentProps {
     canvasHeight: number;
 }
 
+const canvasBackgroundColor = "rgb(29, 29, 43)";
 const PosterComponent = ({
     yAxisDataStepInSeconds,
     xAxisData,
@@ -56,7 +57,6 @@ const PosterComponent = ({
         // Redraw canvas
         ctx.fillStyle = parameters.backgroundColor;
         ctx.fillRect(0, 0, width, height);
-       
 
         // Set up axis data
         const filteredXAxisData = xAxisData.filter(
@@ -85,15 +85,11 @@ const PosterComponent = ({
                 maxY = Math.max(maxY, yValue);
             });
         });
-        
-        // Add some padding to the y-axis range
-        minY -= 1.2;
-        maxY += 0.5;
 
         // Function to map y value to canvas coordinates
         const mapY = (yValue: number) => {
             const normalizedY = (yValue - minY) / (maxY - minY);
-            return normalizedY * height;
+            return normalizedY * (height - 2 * padding) + padding + barWidth;
         };
 
         ctx.strokeStyle = parameters.axisColor;
@@ -136,7 +132,7 @@ const PosterComponent = ({
             drawLine(
                 ctx,
                 frequencyData,
-                mapY(timestamp),
+                y,
                 padding,
                 barWidth,
                 parameters.strokeColor,
@@ -161,7 +157,7 @@ const PosterComponent = ({
                 width={canvasWidth}
                 height={canvasHeight}
                 className="h-full max-h-full w-auto max-w-full"
-                style={{ backgroundColor: parameters.backgroundColor ?? "rgb(29, 29, 43)" }}
+                style={{ backgroundColor: parameters.backgroundColor ?? canvasBackgroundColor }}
             />
         </div>
     );
@@ -181,55 +177,123 @@ const drawLine = (
     const xAxisbezierControlPointOffset = 0.5;
     const yAxisbezierControlPointOffset = 0.01;
 
+    const lineWidth = 1;
+
     ctx.lineJoin = "round";
     ctx.lineCap = "round";
+    ctx.lineWidth = lineWidth;
 
-    const grad = ctx.createLinearGradient(baselineX, baselineY, baselineX, baselineY - lineHeight);
-    grad.addColorStop(0, strokeColor);
-    grad.addColorStop(1, strokeAccentColor);
-    ctx.strokeStyle = grad;
+    ctx.strokeStyle = canvasBackgroundColor;
+    ctx.fillStyle = canvasBackgroundColor;
 
     let previousPointX = baselineX;
     let previousPointY = baselineY;
     let previousAmplitude = 0;
 
+    ctx.moveTo(previousPointX, previousPointY);
+    ctx.beginPath();
     data.forEach((amplitude, index) => {
-        ctx.beginPath();
         ctx.moveTo(previousPointX, previousPointY);
-        const amplitudeDifference =
-            (previousAmplitude - normalizeAmplitude(amplitude)) * lineHeight;
-
-        const firstPointX =
-            baselineX +
-            index * spaceBetweenEachPoints +
-            spaceBetweenEachPoints * xAxisbezierControlPointOffset;
-        let firstPointY = 0;
-        firstPointY = previousPointY + amplitudeDifference * yAxisbezierControlPointOffset;
-        //ctx.lineTo(firstPointX, firstPointY);
-
-        const secondPointX =
-            baselineX +
-            (index + 1) * spaceBetweenEachPoints -
-            spaceBetweenEachPoints * xAxisbezierControlPointOffset;
-        let secondPointY = 0;
-        secondPointY =
-            previousPointY +
-            amplitudeDifference -
-            amplitudeDifference * yAxisbezierControlPointOffset;
-        //ctx.lineTo(secondPointX, secondPointY);
-
-        let endY = 0;
-        endY = previousPointY + amplitudeDifference;
-        const endX = baselineX + (index + 1) * spaceBetweenEachPoints;
-        //ctx.lineTo(endX, endY);
-
-        ctx.bezierCurveTo(firstPointX, firstPointY, secondPointX, secondPointY, endX, endY);
+        var { endX, endY } = generateBezierCurvePoints(
+            previousAmplitude,
+            amplitude,
+            lineHeight,
+            baselineX,
+            index,
+            spaceBetweenEachPoints,
+            xAxisbezierControlPointOffset,
+            previousPointY,
+            yAxisbezierControlPointOffset,
+            ctx,
+        );
+        ctx.lineTo(baselineX + (index + 1) * spaceBetweenEachPoints, baselineY + lineWidth / 2);
+        ctx.lineTo(baselineX + index * spaceBetweenEachPoints, baselineY + lineWidth / 2);
         previousPointX = endX;
         previousPointY = endY;
         previousAmplitude = normalizeAmplitude(amplitude);
+    });
+    ctx.fill();
+    ctx.stroke();
+
+    //Draw line
+    let previousGradientFirstColor = "hsl(0, 10%, 80%)";
+    let previousGradientSecondColor = "hsl(0, 100%, 20%)";
+    ctx.lineWidth = 3;
+
+    //Reset data
+    previousPointX = baselineX;
+    previousPointY = baselineY;
+    previousAmplitude = 0;
+
+    data.forEach((amplitude, index) => {
+        ctx.beginPath();
+        const grad = ctx.createLinearGradient(
+            baselineX,
+            baselineY,
+            baselineX,
+            baselineY - lineHeight,
+        );
+        grad.addColorStop(0, previousGradientFirstColor);
+        grad.addColorStop(1, previousGradientSecondColor);
+        ctx.strokeStyle = grad;
+        ctx.moveTo(previousPointX, previousPointY);
+        var { endX, endY } = generateBezierCurvePoints(
+            previousAmplitude,
+            amplitude,
+            lineHeight,
+            baselineX,
+            index,
+            spaceBetweenEachPoints,
+            xAxisbezierControlPointOffset,
+            previousPointY,
+            yAxisbezierControlPointOffset,
+            ctx,
+        );
+        previousPointX = endX;
+        previousPointY = endY;
+        previousAmplitude = normalizeAmplitude(amplitude);
+        previousGradientFirstColor = `hsl(${index * 4}, 10%, 80%)`;
+        previousGradientSecondColor = `hsl(${index * 4}, 100%, 20%)`;
         ctx.stroke();
     });
 };
+
+function generateBezierCurvePoints(
+    previousAmplitude: number,
+    amplitude: number,
+    lineHeight: number,
+    baselineX: number,
+    index: number,
+    spaceBetweenEachPoints: number,
+    xAxisbezierControlPointOffset: number,
+    previousPointY: number,
+    yAxisbezierControlPointOffset: number,
+    ctx: CanvasRenderingContext2D,
+): { endX: number; endY: number } {
+    const amplitudeDifference = (previousAmplitude - normalizeAmplitude(amplitude)) * lineHeight;
+
+    const firstPointX =
+        baselineX +
+        index * spaceBetweenEachPoints +
+        spaceBetweenEachPoints * xAxisbezierControlPointOffset;
+    let firstPointY = 0;
+    firstPointY = previousPointY + amplitudeDifference * yAxisbezierControlPointOffset;
+    //ctx.lineTo(firstPointX, firstPointY);
+    const secondPointX =
+        baselineX +
+        (index + 1) * spaceBetweenEachPoints -
+        spaceBetweenEachPoints * xAxisbezierControlPointOffset;
+    let secondPointY = 0;
+    secondPointY =
+        previousPointY + amplitudeDifference - amplitudeDifference * yAxisbezierControlPointOffset;
+    //ctx.lineTo(secondPointX, secondPointY);
+    let endY = 0;
+    endY = previousPointY + amplitudeDifference;
+    const endX = baselineX + (index + 1) * spaceBetweenEachPoints;
+    //ctx.lineTo(endX, endY);
+    ctx.bezierCurveTo(firstPointX, firstPointY, secondPointX, secondPointY, endX, endY);
+    return { endX, endY };
+}
 
 const normalizeAmplitude = (amplitude: number): number => {
     return amplitude / 255;
