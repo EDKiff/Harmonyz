@@ -29,7 +29,6 @@ interface PosterComponentProps {
     canvasHeight: number;
 }
 
-const canvasBackgroundColor = "rgb(29, 29, 43)";
 const PosterComponent = ({
     yAxisDataStepInSeconds,
     xAxisData,
@@ -57,7 +56,7 @@ const PosterComponent = ({
         // Redraw canvas
         ctx.fillStyle = parameters.backgroundColor;
         ctx.fillRect(0, 0, width, height);
-
+       
         // Set up axis data
         const filteredXAxisData = xAxisData.filter(
             (freq) => freq >= parameters.minFrequency && freq <= parameters.maxFrequency,
@@ -85,6 +84,7 @@ const PosterComponent = ({
                 maxY = Math.max(maxY, yValue);
             });
         });
+        
 
         // Function to map y value to canvas coordinates
         const mapY = (yValue: number) => {
@@ -135,8 +135,7 @@ const PosterComponent = ({
                 y,
                 padding,
                 barWidth,
-                parameters.strokeColor,
-                parameters.strokeAccentColor,
+                parameters,
             );
         });
     }, [
@@ -156,35 +155,27 @@ const PosterComponent = ({
                 ref={canvasRef}
                 width={canvasWidth}
                 height={canvasHeight}
-                className="h-full max-h-full w-auto max-w-full"
-                style={{ backgroundColor: parameters.backgroundColor ?? canvasBackgroundColor }}
+                className="h-full max-h-full w-auto max-w-full  rounded-[2px] shadow-[0_24px_56px_rgba(15,23,42,0.35)]"
+                style={{ backgroundColor: parameters.backgroundColor }}
             />
         </div>
     );
 };
 
 const drawLine = (
-    ctx: CanvasRenderingContext2D,
-    data: number[],
-    baselineY: number,
-    baselineX: number,
-    spaceBetweenEachPoints: number,
-    strokeColor: string,
-    strokeAccentColor: string,
+ctx: CanvasRenderingContext2D, data: number[], baselineY: number, baselineX: number, spaceBetweenEachPoints: number, parameters: PosterComponentParameters,
 ) => {
     const lineHeight = 50;
 
     const xAxisbezierControlPointOffset = 0.5;
     const yAxisbezierControlPointOffset = 0.01;
 
-    const lineWidth = 1;
-
     ctx.lineJoin = "round";
     ctx.lineCap = "round";
-    ctx.lineWidth = lineWidth;
+    ctx.lineWidth = parameters.dataLinesWidth;
 
-    ctx.strokeStyle = canvasBackgroundColor;
-    ctx.fillStyle = canvasBackgroundColor;
+    ctx.strokeStyle = parameters.backgroundColor;
+    ctx.fillStyle = parameters.backgroundColor;
 
     let previousPointX = baselineX;
     let previousPointY = baselineY;
@@ -206,8 +197,8 @@ const drawLine = (
             yAxisbezierControlPointOffset,
             ctx,
         );
-        ctx.lineTo(baselineX + (index + 1) * spaceBetweenEachPoints, baselineY + lineWidth / 2);
-        ctx.lineTo(baselineX + index * spaceBetweenEachPoints, baselineY + lineWidth / 2);
+        ctx.lineTo(baselineX + (index + 1) * spaceBetweenEachPoints, baselineY + parameters.dataLinesWidth / 2);
+        ctx.lineTo(baselineX + index * spaceBetweenEachPoints, baselineY + parameters.dataLinesWidth / 2);
         previousPointX = endX;
         previousPointY = endY;
         previousAmplitude = normalizeAmplitude(amplitude);
@@ -216,9 +207,9 @@ const drawLine = (
     ctx.stroke();
 
     //Draw line
-    let previousGradientFirstColor = "hsl(0, 10%, 80%)";
-    let previousGradientSecondColor = "hsl(0, 100%, 20%)";
-    ctx.lineWidth = 3;
+    let previousGradientFirstColor = parameters.strokeColor;
+    let previousGradientSecondColor = parameters.strokeAccentColor;
+    ctx.lineWidth = parameters.dataLinesWidth;
 
     //Reset data
     previousPointX = baselineX;
