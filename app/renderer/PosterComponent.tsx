@@ -56,7 +56,7 @@ const PosterComponent = ({
         // Redraw canvas
         ctx.fillStyle = parameters.backgroundColor;
         ctx.fillRect(0, 0, width, height);
-       
+
         // Set up axis data
         const filteredXAxisData = xAxisData.filter(
             (freq) => freq >= parameters.minFrequency && freq <= parameters.maxFrequency,
@@ -84,7 +84,6 @@ const PosterComponent = ({
                 maxY = Math.max(maxY, yValue);
             });
         });
-        
 
         // Function to map y value to canvas coordinates
         const mapY = (yValue: number) => {
@@ -129,14 +128,7 @@ const PosterComponent = ({
             ctx.fillStyle = parameters.axisColor;
             ctx.fillText((timestamp * yAxisDataStepInSeconds).toFixed(1), padding - 25, y);
 
-            drawLine(
-                ctx,
-                frequencyData,
-                y,
-                padding,
-                barWidth,
-                parameters,
-            );
+            drawLine(ctx, frequencyData, y, padding, barWidth, parameters);
         });
     }, [
         displayableNotes,
@@ -163,7 +155,12 @@ const PosterComponent = ({
 };
 
 const drawLine = (
-ctx: CanvasRenderingContext2D, data: number[], baselineY: number, baselineX: number, spaceBetweenEachPoints: number, parameters: PosterComponentParameters,
+    ctx: CanvasRenderingContext2D,
+    data: number[],
+    baselineY: number,
+    baselineX: number,
+    spaceBetweenEachPoints: number,
+    parameters: PosterComponentParameters,
 ) => {
     const lineHeight = 50;
 
@@ -197,8 +194,14 @@ ctx: CanvasRenderingContext2D, data: number[], baselineY: number, baselineX: num
             yAxisbezierControlPointOffset,
             ctx,
         );
-        ctx.lineTo(baselineX + (index + 1) * spaceBetweenEachPoints, baselineY + parameters.dataLinesWidth / 2);
-        ctx.lineTo(baselineX + index * spaceBetweenEachPoints, baselineY + parameters.dataLinesWidth / 2);
+        ctx.lineTo(
+            baselineX + (index + 1) * spaceBetweenEachPoints,
+            baselineY + parameters.dataLinesWidth / 2,
+        );
+        ctx.lineTo(
+            baselineX + index * spaceBetweenEachPoints,
+            baselineY + parameters.dataLinesWidth / 2,
+        );
         previousPointX = endX;
         previousPointY = endY;
         previousAmplitude = normalizeAmplitude(amplitude);

@@ -28,6 +28,6 @@ export type PosterState = {
 };
 
 export type PosterPreset = Partial<PosterState> & {
-  id: string;
-  description: string;
+    id: string;
+    description: string;
 };

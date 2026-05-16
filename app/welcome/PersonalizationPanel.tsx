@@ -161,9 +161,7 @@ export function PersonalizationPanel({
                                         <span className="text-slate-600">Axis font</span>
                                         <select
                                             value={posterState.axisFont}
-                                            onChange={(e) =>
-                                                onChange({ axisFont: e.target.value })
-                                            }
+                                            onChange={(e) => onChange({ axisFont: e.target.value })}
                                             className="w-full rounded border border-slate-300 bg-white px-2 py-1.5 text-sm text-slate-900"
                                         >
                                             <option value="Arial">Arial</option>
@@ -204,10 +202,7 @@ export function PersonalizationPanel({
                                         <input
                                             type="range"
                                             min="20"
-                                            max={Math.max(
-                                                100,
-                                                posterState.maxFrequency - 50,
-                                            )}
+                                            max={Math.max(100, posterState.maxFrequency - 50)}
                                             step="10"
                                             value={posterState.minFrequency}
                                             onChange={(e) =>
@@ -374,7 +369,8 @@ export function PersonalizationPanel({
                                 const { id, description, ...presetPatch } = preset;
                                 const previewBackgroundColor =
                                     preset.backgroundColor ?? posterState.backgroundColor;
-                                const previewStrokeColor = preset.strokeColor ?? posterState.strokeColor;
+                                const previewStrokeColor =
+                                    preset.strokeColor ?? posterState.strokeColor;
                                 const previewStrokeAccentColor =
                                     preset.strokeAccentColor ?? posterState.strokeAccentColor;
                                 const previewAxisColor = preset.axisColor ?? posterState.axisColor;
@@ -414,9 +410,7 @@ export function PersonalizationPanel({
                                         <p className="mt-3 text-sm font-semibold text-slate-900">
                                             {toPresetTitle(id)}
                                         </p>
-                                        <p className="mt-1 text-xs text-slate-600">
-                                            {description}
-                                        </p>
+                                        <p className="mt-1 text-xs text-slate-600">{description}</p>
                                     </button>
                                 );
                             })}

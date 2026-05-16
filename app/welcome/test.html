@@ -1,0 +1,97 @@
+<!doctype html>
+<html>
+    <body>
+        <h1>HTML5 Canvas - lineCap Property</h1>
+
+        <canvas
+            id="myCanvas"
+            width="500"
+            height="300"
+            style="border: 1px solid #000000; background-color: #1d1d2b"
+        >
+            Sorry, your browser does not support canvas.
+        </canvas>
+
+        <script>
+            const data = [0.1, 0.2, 0.9, 0.85, 0.1, 0, 0, 1, 0.1, 0.2, 0];
+
+            const canvas = document.getElementById("myCanvas");
+            const ctx = canvas.getContext("2d");
+
+            const lineHeight = 200;
+            const spaceBetweenEachPoints = 50;
+            const baselineY = 290;
+            const baselineX = 0;
+
+            const xAxisbezierControlPointOffset = 0.5;
+            const yAxisbezierControlPointOffset = 0.01;
+
+            ctx.lineJoin = "round";
+            ctx.lineCap = "round";
+            let lineWidth = 1;
+            ctx.lineWidth = lineWidth;
+
+            let previousPointX = baselineX;
+            let previousPointY = baselineY;
+            let previousAmplitude = 0;
+
+            ctx.moveTo(baselineX, baselineY);
+
+            ctx.lineJoin = "round";
+            ctx.lineCap = "round";
+            lineWidth = 5;
+            ctx.lineWidth = lineWidth;
+
+            previousPointX = baselineX;
+            previousPointY = baselineY;
+            previousAmplitude = 0;
+
+            let previousGradientFirstColor = "hsl(0, 10%, 80%)";
+            let previousGradientSecondColor = "hsl(0, 100%, 20%)";
+
+            data.forEach((amplitude, index) => {
+                if (index >= 2) {
+                    return;
+                }
+                ctx.beginPath();
+
+                ctx.strokeStyle = "white";
+                ctx.moveTo(previousPointX, previousPointY);
+                console.log("amplitude", amplitude, "index", index);
+                const amplitudeDifference = (previousAmplitude - amplitude) * lineHeight;
+                console.log("amplitudeDifference", amplitudeDifference);
+
+                const endY = previousPointY + amplitudeDifference;
+                const endX = (index + 1) * spaceBetweenEachPoints;
+                console.log("endX", endX, "endY", endY);
+
+                const firstPointX = (endX + previousPointX) / 2 + 0.2 * amplitudeDifference;
+                const firstPointY = (previousPointY + endY) / 2;
+                console.log("firstPointX", firstPointX, "firstPointY", firstPointY);
+                //ctx.lineTo(firstPointX, firstPointY);
+
+                const secondPointX =
+                    (index + 1) * spaceBetweenEachPoints -
+                    spaceBetweenEachPoints * xAxisbezierControlPointOffset;
+                const secondPointY =
+                    previousPointY +
+                    amplitudeDifference -
+                    amplitudeDifference * yAxisbezierControlPointOffset;
+                console.log("secondPointX", secondPointX, "secondPointY", secondPointY);
+                //ctx.lineTo(secondPointX, secondPointY);
+
+                //ctx.lineTo(endX, endY);
+
+                ctx.bezierCurveTo(firstPointX, firstPointY, firstPointX, firstPointY, endX, endY);
+
+                //debug lines
+                //ctx.lineTo((index + 1) * spaceBetweenEachPoints, baselineY + lineWidth / 2);
+                //
+                previousPointX = endX;
+                previousPointY = endY;
+                previousAmplitude = amplitude;
+                ctx.stroke();
+            });
+        </script>
+    </body>
+</html>

@@ -76,9 +76,8 @@ export function Welcome() {
     const [isFormatPanelVisible, setIsFormatPanelVisible] = useState(true);
 
     const [posterState, setPosterState] = useState<PosterState>(DEFAULT_POSTER_STATE);
-    const [throttledPosterState, setThrottledPosterState] = useState<PosterState>(
-        DEFAULT_POSTER_STATE,
-    );
+    const [throttledPosterState, setThrottledPosterState] =
+        useState<PosterState>(DEFAULT_POSTER_STATE);
 
     const [xAxis, setXAxis] = useState<number[]>([]);
     const [seriesData, setSeriesData] = useState<Array<Array<number>>>([]);
@@ -216,7 +215,10 @@ export function Welcome() {
     };
 
     return (
-        <main className="relative h-screen w-screen overflow-hidden bg-white" style={{ colorScheme: "light" }}>
+        <main
+            className="relative h-screen w-screen overflow-hidden bg-white"
+            style={{ colorScheme: "light" }}
+        >
             <input
                 ref={fileInputRef}
                 type="file"
@@ -269,9 +271,7 @@ export function Welcome() {
                     <IconButton
                         active={isFormatPanelVisible}
                         onClick={() => setIsFormatPanelVisible((current) => !current)}
-                        title={
-                            isFormatPanelVisible ? "Close format panel" : "Open format panel"
-                        }
+                        title={isFormatPanelVisible ? "Close format panel" : "Open format panel"}
                     >
                         {isFormatPanelVisible ? (
                             <X className={TOOLBAR_ICON_CLASS} strokeWidth={1.8} />
