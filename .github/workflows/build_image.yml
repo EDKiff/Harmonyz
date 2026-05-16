@@ -19,6 +19,10 @@ jobs:
             - name: Checkout code
               uses: actions/checkout@v6
 
+            - name: Set lowercase image name
+              id: image
+              run: echo "NAME=$(echo '${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}' | tr '[:upper:]' '[:lower:]')" >> $GITHUB_OUTPUT
+
             - name: Setup Node.js
               uses: actions/setup-node@v6
               with:
@@ -50,6 +54,6 @@ jobs:
               with:
                   context: .
                   push: true
-                  tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.version.outputs.VERSION }}
-                  cache-from: type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:buildcache
-                  cache-to: type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:buildcache,mode=max
+                  tags: ${{ steps.image.outputs.NAME }}:${{ steps.version.outputs.VERSION }}
+                  cache-from: type=registry,ref=${{ steps.image.outputs.NAME }}:buildcache
+                  cache-to: type=registry,ref=${{ steps.image.outputs.NAME }}:buildcache,mode=max
