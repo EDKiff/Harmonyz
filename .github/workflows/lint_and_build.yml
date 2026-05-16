@@ -1,11 +1,11 @@
-name: Lint
+name: Lint and build
 
 on:
     workflow_call:
 
 jobs:
     lint:
-        name: Lint Code
+        name: Lint and Build
         runs-on: ubuntu-latest
         steps:
             - name: Checkout code
@@ -25,3 +25,6 @@ jobs:
 
             - name: Type check
               run: npm run typecheck
+
+            - name: Build project
+              run: npm run build

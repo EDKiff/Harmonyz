@@ -10,8 +10,8 @@ permissions:
 
 jobs:
     lint:
-        name: Lint Code
-        uses: ./.github/workflows/lint.yml
+        name: Lint and Build
+        uses: ./.github/workflows/lint_and_build.yml
 
     version-and-tag:
         name: Increment Version and Create Tag
