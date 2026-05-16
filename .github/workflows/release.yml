@@ -37,15 +37,6 @@ jobs:
               id: commit
               run: echo "MESSAGE=$(git log -1 --pretty=%B)" >> $GITHUB_OUTPUT
 
-            - name: Check if this is a version bump commit
-              id: should_skip
-              run: |
-                  if [[ "${{ steps.commit.outputs.MESSAGE }}" == *"chore: bump version"* ]]; then
-                    echo "SKIP=true" >> $GITHUB_OUTPUT
-                  else
-                    echo "SKIP=false" >> $GITHUB_OUTPUT
-                  fi
-
             - name: Get current version
               id: current
               run: echo "VERSION=$(node -p "require('./package.json').version")" >> $GITHUB_OUTPUT
@@ -60,7 +51,7 @@ jobs:
                   fi
 
             - name: Increment version and create tag
-              if: steps.should_skip.outputs.SKIP == 'false' && steps.tag_exists.outputs.EXISTS == 'false'
+              if: steps.tag_exists.outputs.EXISTS == 'false'
               run: |
                   npm version patch --no-git-tag-version
                   git add package.json package-lock.json
@@ -74,6 +65,8 @@ jobs:
               if: steps.tag_exists.outputs.EXISTS == 'true'
               run: echo "Version v${{ steps.current.outputs.VERSION }} already tagged. Skipping version bump."
 
-            - name: Version bump skipped
-              if: steps.should_skip.outputs.SKIP == 'true'
-              run: echo "Version bump commit detected. Skipping to prevent self-triggered workflow."
+    build-image:
+        name: Build and Push Docker Image
+        uses: ./.github/workflows/build_image.yml
+        needs: version-and-tag
+        if: needs.version-and-tag.result == 'success'
