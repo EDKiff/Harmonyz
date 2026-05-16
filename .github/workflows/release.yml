@@ -7,6 +7,7 @@ on:
 
 permissions:
     contents: write
+    packages: write
 
 jobs:
     lint:
@@ -17,9 +18,6 @@ jobs:
         name: Increment Version and Create Tag
         runs-on: ubuntu-latest
         needs: lint
-        permissions:
-            contents: read
-            packages: write
         steps:
             - name: Checkout code
               uses: actions/checkout@v6
