@@ -1,5 +1,5 @@
 import { useState } from "react";
-import type { PosterPreset, PosterState } from "./welcome.types";
+import type { PosterPreset, PosterState, PosterStyle } from "./welcome.types";
 
 export type PersonalizationTab = "advanced" | "presets";
 
@@ -7,6 +7,8 @@ const PANEL_BASE_CLASS =
     "overflow-hidden rounded-2xl border border-slate-200 bg-gradient-to-br from-white via-slate-50 to-slate-100 shadow-2xl backdrop-blur-sm";
 
 interface PersonalizationPanelProps {
+    drawingStyle: PosterStyle;
+    onStyleChange: (style: PosterStyle) => void;
     logoSrc: string;
     selectedFile: File | null;
     posterState: PosterState;
@@ -16,6 +18,8 @@ interface PersonalizationPanelProps {
 }
 
 export function PersonalizationPanel({
+    drawingStyle,
+    onStyleChange,
     logoSrc,
     selectedFile,
     posterState,
@@ -54,6 +58,17 @@ export function PersonalizationPanel({
                     {selectedFile && <p>{(selectedFile.size / 1024 / 1024).toFixed(2)} MB</p>}
                 </div>
 
+                <label className="mb-4 block space-y-1 text-sm">
+                    <span className="font-medium text-slate-700">Drawing style</span>
+                    <select
+                        value={drawingStyle}
+                        onChange={(event) => onStyleChange(event.target.value as PosterStyle)}
+                        className="w-full rounded border border-slate-300 bg-white px-2 py-2 text-slate-900"
+                    >
+                        <option value="spectrum">Spectrum</option>
+                        <option value="joy-division">Joy Division</option>
+                    </select>
+                </label>
                 <div className="min-h-0 flex-1 overflow-y-auto pr-1">
                     <div className="grid grid-cols-2 gap-2 rounded-lg bg-slate-100 p-1">
                         <button
@@ -115,17 +130,21 @@ export function PersonalizationPanel({
                                     </div>
 
                                     <div className="grid grid-cols-2 gap-2">
-                                        <label className="space-y-1">
-                                            <span className="block text-slate-600">Axis color</span>
-                                            <input
-                                                type="color"
-                                                value={posterState.axisColor}
-                                                onChange={(e) =>
-                                                    onChange({ axisColor: e.target.value })
-                                                }
-                                                className="h-9 w-full cursor-pointer rounded border border-slate-300 bg-white p-1"
-                                            />
-                                        </label>
+                                        {drawingStyle === "spectrum" && (
+                                            <label className="space-y-1">
+                                                <span className="block text-slate-600">
+                                                    Axis color
+                                                </span>
+                                                <input
+                                                    type="color"
+                                                    value={posterState.axisColor}
+                                                    onChange={(e) =>
+                                                        onChange({ axisColor: e.target.value })
+                                                    }
+                                                    className="h-9 w-full cursor-pointer rounded border border-slate-300 bg-white p-1"
+                                                />
+                                            </label>
+                                        )}
                                         <label className="space-y-1">
                                             <span className="block text-slate-600">Background</span>
                                             <input
@@ -157,20 +176,24 @@ export function PersonalizationPanel({
                                         </span>
                                     </label>
 
-                                    <label className="block space-y-1">
-                                        <span className="text-slate-600">Axis font</span>
-                                        <select
-                                            value={posterState.axisFont}
-                                            onChange={(e) => onChange({ axisFont: e.target.value })}
-                                            className="w-full rounded border border-slate-300 bg-white px-2 py-1.5 text-sm text-slate-900"
-                                        >
-                                            <option value="Arial">Arial</option>
-                                            <option value="Georgia">Georgia</option>
-                                            <option value="Courier New">Courier New</option>
-                                            <option value="Trebuchet MS">Trebuchet MS</option>
-                                            <option value="Verdana">Verdana</option>
-                                        </select>
-                                    </label>
+                                    {drawingStyle === "spectrum" && (
+                                        <label className="block space-y-1">
+                                            <span className="text-slate-600">Axis font</span>
+                                            <select
+                                                value={posterState.axisFont}
+                                                onChange={(e) =>
+                                                    onChange({ axisFont: e.target.value })
+                                                }
+                                                className="w-full rounded border border-slate-300 bg-white px-2 py-1.5 text-sm text-slate-900"
+                                            >
+                                                <option value="Arial">Arial</option>
+                                                <option value="Georgia">Georgia</option>
+                                                <option value="Courier New">Courier New</option>
+                                                <option value="Trebuchet MS">Trebuchet MS</option>
+                                                <option value="Verdana">Verdana</option>
+                                            </select>
+                                        </label>
+                                    )}
                                 </div>
                             </div>
 
@@ -379,7 +402,16 @@ export function PersonalizationPanel({
                                     <button
                                         key={preset.id}
                                         type="button"
-                                        onClick={() => onChange(presetPatch)}
+                                        onClick={() => {
+                                            if (drawingStyle === "joy-division") {
+                                                const {
+                                                    axisColor: _axisColor,
+                                                    axisFont: _axisFont,
+                                                    ...applicable
+                                                } = presetPatch;
+                                                onChange(applicable);
+                                            } else onChange(presetPatch);
+                                        }}
                                         className="w-full rounded-lg border border-slate-200 p-3 text-left transition hover:border-slate-300 hover:bg-slate-50"
                                     >
                                         <div
@@ -399,12 +431,14 @@ export function PersonalizationPanel({
                                                         background: `linear-gradient(to right, ${previewStrokeAccentColor}, ${previewStrokeColor})`,
                                                     }}
                                                 />
-                                                <div
-                                                    className="h-[2px] w-full rounded-full"
-                                                    style={{
-                                                        backgroundColor: previewAxisColor,
-                                                    }}
-                                                />
+                                                {drawingStyle === "spectrum" && (
+                                                    <div
+                                                        className="h-[2px] w-full rounded-full"
+                                                        style={{
+                                                            backgroundColor: previewAxisColor,
+                                                        }}
+                                                    />
+                                                )}
                                             </div>
                                         </div>
                                         <p className="mt-3 text-sm font-semibold text-slate-900">

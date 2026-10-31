@@ -1,6 +1,6 @@
 # 04 — Paramètres et presets
 
-Le modèle central est [PosterState](../../app/welcome/welcome.types.ts). Ses valeurs initiales proviennent de [DEFAULT_POSTER_STATE](../../app/welcome/welcome.constants.ts). Les contraintes d’interface sont dans [PersonalizationPanel](../../app/welcome/PersonalizationPanel.tsx) et [FormatPanel](../../app/welcome/FormatPanel.tsx) ; elles ne forment pas un validateur indépendant du moteur.
+Le modèle central est [PosterState](../../app/welcome/welcome.types.ts). Le [modèle d’édition](../../app/welcome/posterEditorState.ts) sépare le format commun des réglages propres à chaque style. Les tableaux ci-dessous décrivent les valeurs initiales de Spectrum, issues de [DEFAULT_POSTER_STATE](../../app/welcome/welcome.constants.ts). Joy Division démarre avec 80 lignes, une FFT de 4 096, un fond noir, deux couleurs de trait blanches et une épaisseur de référence 3. Les autres valeurs initiales sont communes aux deux styles ; leurs modifications sont ensuite indépendantes. Les contraintes d’interface sont dans [PersonalizationPanel](../../app/welcome/PersonalizationPanel.tsx) et [FormatPanel](../../app/welcome/FormatPanel.tsx) ; elles ne forment pas un validateur indépendant du moteur.
 
 ## Format
 
@@ -13,7 +13,7 @@ Le modèle central est [PosterState](../../app/welcome/welcome.types.ts). Ses va
 | `customPosterDpi`      | `300`           | Bornes 30–1 200 ; utilisé seulement en format personnalisé.    |
 | `customSizeUnit`       | `cm`            | Unité de saisie `cm` ou `px` ; le stockage reste en mm.        |
 
-Les champs personnalisés ne sont affichés qu’en mode `CUSTOM`. Changer d’unité ne devrait pas modifier le dessin, mais déclenche actuellement un recalcul audio parce que tout l’état est observé par le même effet.
+Les champs personnalisés ne sont affichés qu’en mode `CUSTOM`. Changer d’unité demande une génération mais réutilise l’analyse en cache.
 
 ## Apparence et plage affichée
 
@@ -43,7 +43,11 @@ Les fréquences ci-dessus sont celles affichées par l’interface. Leur corresp
 
 Le constructeur de `AudioAnalyzer` possède aussi ses propres valeurs de secours : lissage `0`, minimum `-90` dB et maximum `-10` dB. Elles diffèrent de celles de l’éditeur, qui transmet toujours ses paramètres dans le parcours actuel.
 
+Les contrôles Axis color et Axis font sont masqués dans Joy Division. Le format (orientation, dimensions, unité et DPI compris) et le fichier restent communs lors des changements de style. Aucun de ces réglages n’est sauvegardé au rechargement.
+
 ## Presets
+
+Les quatre presets sont disponibles pour chaque style et ne changent jamais le mode de dessin. Ils ne modifient que les réglages du style actif ; les champs d’axes sont ignorés dans Joy Division.
 
 Un `PosterPreset` est un état partiel accompagné de `id` et `description`. Le panneau retire ces deux champs avant d’appliquer les autres avec un patch : le preset ne réinitialise pas l’ensemble de l’état et ne mémorise pas sa propre sélection. `PosterState.id` reste initialement `custom`, avec la description `Custom poster.` ; ces champs ne sont pas un titre libre imprimé sur le poster.
 

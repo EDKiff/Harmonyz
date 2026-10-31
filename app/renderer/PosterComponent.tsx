@@ -1,4 +1,6 @@
-import { useEffect, useRef } from "react";
+import { useLayoutEffect, useRef } from "react";
+import { drawJoyDivision } from "./JoyDivisionRenderer";
+import type { PosterStyle } from "~/welcome/welcome.types";
 import type { Notes } from "~/notes/Notes";
 
 type YAxisData = {
@@ -19,6 +21,7 @@ export type PosterComponentParameters = {
 };
 
 interface PosterComponentProps {
+    drawingStyle?: PosterStyle;
     yAxisDataStepInSeconds: number;
     xAxisData: Array<number>;
     yAxisData: Array<YAxisData>;
@@ -30,6 +33,7 @@ interface PosterComponentProps {
 }
 
 const PosterComponent = ({
+    drawingStyle = "spectrum",
     yAxisDataStepInSeconds,
     xAxisData,
     yAxisData,
@@ -41,10 +45,9 @@ const PosterComponent = ({
 }: PosterComponentProps) => {
     const canvasRef = useRef<HTMLCanvasElement>(null);
 
-    useEffect(() => {
+    useLayoutEffect(() => {
         const canvas = canvasRef.current;
         if (!canvas) return;
-        if (xAxisData.length === 0 || yAxisData.length === 0) return;
 
         const ctx = canvas.getContext("2d");
         if (!ctx) return;
@@ -69,6 +72,18 @@ const PosterComponent = ({
                     xAxisData[index] <= parameters.maxFrequency,
             ),
         }));
+
+        if (drawingStyle === "joy-division") {
+            drawJoyDivision(
+                ctx,
+                filteredYAxisData.map((row) => row.frequencyData),
+                width,
+                height,
+                parameters,
+            );
+            return;
+        }
+        if (filteredXAxisData.length < 2 || filteredYAxisData.length === 0) return;
 
         const padding = 50;
         const barWidth = (width - 2 * padding) / filteredXAxisData.length;
@@ -132,6 +147,7 @@ const PosterComponent = ({
         });
     }, [
         displayableNotes,
+        drawingStyle,
         parameters,
         canvasHeight,
         canvasWidth,

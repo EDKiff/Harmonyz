@@ -39,6 +39,14 @@ class AudioAnalyzer {
     // Analyse seconde par seconde le spectrum de l'audio
     // OfflineAudioContext sert a lire l'audio sans le jouer
     async analyzeFullAudio(arrayBuffer: ArrayBuffer): Promise<AnalyzedAudioData> {
+        try {
+            return await this.analyzeBuffer(arrayBuffer);
+        } finally {
+            await this.audioContext.close();
+        }
+    }
+
+    private async analyzeBuffer(arrayBuffer: ArrayBuffer): Promise<AnalyzedAudioData> {
         const audioBuffer = await this.audioContext.decodeAudioData(arrayBuffer);
         //Debug info on decoded audio
         console.log("Decoded audio buffer:", {

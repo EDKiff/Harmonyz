@@ -7,7 +7,6 @@ import PosterComponent from "~/renderer/PosterComponent";
 import { FormatPanel } from "./FormatPanel";
 import { PersonalizationPanel } from "./PersonalizationPanel";
 import {
-    DEFAULT_POSTER_STATE,
     MILLIMETER_TO_PIXEL_RATIO,
     MILLIMETERS_PER_INCH,
     PANEL_CHANGE_THROTTLE_MS,
@@ -16,6 +15,7 @@ import {
     POSTER_PRESETS,
     POSTER_SIZE_LIMITS_MM,
 } from "./welcome.constants";
+import { createPosterEditorState, patchPosterEditor } from "./posterEditorState";
 import type { PosterState } from "./welcome.types";
 
 type IconButtonProps = {
@@ -75,9 +75,13 @@ export function Welcome() {
     const [isPersonalizationPanelVisible, setIsPersonalizationPanelVisible] = useState(true);
     const [isFormatPanelVisible, setIsFormatPanelVisible] = useState(true);
 
-    const [posterState, setPosterState] = useState<PosterState>(DEFAULT_POSTER_STATE);
-    const [throttledPosterState, setThrottledPosterState] =
-        useState<PosterState>(DEFAULT_POSTER_STATE);
+    const [editor, setEditor] = useState(createPosterEditorState);
+    const posterState = useMemo(
+        () => ({ ...editor.format, ...editor.styles[editor.selectedStyle] }),
+        [editor],
+    );
+    const [throttledPosterState, setThrottledPosterState] = useState<PosterState>(posterState);
+    const [renderStyle, setRenderStyle] = useState(editor.selectedStyle);
 
     const [xAxis, setXAxis] = useState<number[]>([]);
     const [seriesData, setSeriesData] = useState<Array<Array<number>>>([]);
@@ -85,18 +89,16 @@ export function Welcome() {
     useEffect(() => {
         const timeoutId = window.setTimeout(() => {
             setThrottledPosterState(posterState);
+            setRenderStyle(editor.selectedStyle);
         }, PANEL_CHANGE_THROTTLE_MS);
 
         return () => {
             window.clearTimeout(timeoutId);
         };
-    }, [posterState]);
+    }, [posterState, editor.selectedStyle]);
 
     const updatePosterState = useCallback((patch: Partial<PosterState>) => {
-        setPosterState((current) => ({
-            ...current,
-            ...patch,
-        }));
+        setEditor((current) => patchPosterEditor(current, patch));
     }, []);
 
     const yAxisData = useMemo(
@@ -165,6 +167,7 @@ export function Welcome() {
         const file = e.target.files?.[0];
         if (!file) return;
 
+        generationCounterRef.current++;
         setSelectedFile(file);
         setGeneratedPoster(false);
         setXAxis([]);
@@ -187,6 +190,8 @@ export function Welcome() {
             setXAxis(xAxis);
             setSeriesData(series);
         } catch (error) {
+            if (generationId !== generationCounterRef.current) return;
+            setGeneratedPoster(false);
             console.error("Failed to generate poster:", error);
         } finally {
             if (generationId === generationCounterRef.current) {
@@ -198,6 +203,9 @@ export function Welcome() {
     useEffect(() => {
         if (!selectedFile) return;
         void generatePoster(selectedFile, throttledPosterState);
+        return () => {
+            generationCounterRef.current++;
+        };
     }, [selectedFile, throttledPosterState]);
 
     const handleSavePoster = () => {
@@ -231,6 +239,7 @@ export function Welcome() {
                 {generatedPoster ? (
                     <div className="h-full w-full p-2">
                         <PosterComponent
+                            drawingStyle={renderStyle}
                             canvasId="poster-preview-canvas"
                             yAxisDataStepInSeconds={throttledPosterState.durationBetweenLines}
                             xAxisData={xAxis}
@@ -284,7 +293,9 @@ export function Welcome() {
                     </IconButton>
                     <IconButton
                         onClick={handleSavePoster}
-                        disabled={!generatedPoster || isGenerating}
+                        disabled={
+                            !generatedPoster || isGenerating || posterState !== throttledPosterState
+                        }
                         title="Save"
                     >
                         <Download className={TOOLBAR_ICON_CLASS} strokeWidth={1.8} />
@@ -319,6 +330,10 @@ export function Welcome() {
                             logoSrc={logo}
                             selectedFile={selectedFile}
                             posterState={posterState}
+                            drawingStyle={editor.selectedStyle}
+                            onStyleChange={(selectedStyle) =>
+                                setEditor((current) => ({ ...current, selectedStyle }))
+                            }
                             presets={POSTER_PRESETS}
                             onChange={updatePosterState}
                         />
