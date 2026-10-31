@@ -77,3 +77,7 @@ Toutes les étapes partent de `node:20-alpine`, tandis que les workflows utilise
 Le code ne déclare pas de déclenchement `pull_request` pour ces contrôles. Le checkout du job image n’est pas explicitement lié au commit créé par le job de version ; la concordance entre commit versionné et image publiée doit être vérifiée sur une exécution réelle. Aucun déploiement applicatif vers un hébergement n’est défini dans ces workflows.
 
 L’audit n’a lancé ni publication d’image, ni tag, ni push.
+
+## Vérifications du style Joy Division
+
+Le développement du 31 octobre 2026 a été vérifié dans Chromium automatisé avec `song.mp3`, en complément de TypeScript et du build. La [recette de la feature 002](../feature/002-style-joy-division/validation/README.md) conserve les scénarios exécutés, les images portrait/paysage et la comparaison à la référence. Playwright et le navigateur ont été utilisés depuis des dossiers temporaires, sans ajout de dépendance au projet. Le [script de recette](../feature/002-style-joy-division/validation/verification.cjs) est conservé avec la feature pour répéter ces vérifications et régénérer les images ; il ne constitue pas une campagne multi-navigateurs.

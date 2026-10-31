@@ -4,6 +4,8 @@
 
 La chaîne actuelle est implémentée dans [PosterGenerator](../../app/renderer/PosterGenerator.ts) et [AudioAnalyzer](../../app/renderer/AudioAnalyzer.ts).
 
+Le générateur consulte d’abord un cache borné à quatre analyses par fichier, indexées par les paramètres audio. Sur un cache manquant :
+
 1. `File.arrayBuffer()` lit tout le fichier en mémoire.
 2. Un nouvel `AudioContext` décode le fichier via `decodeAudioData`.
 3. Un `OfflineAudioContext` mono est créé pour la longueur et la fréquence d’échantillonnage du buffer décodé.
@@ -11,7 +13,7 @@ La chaîne actuelle est implémentée dans [PosterGenerator](../../app/renderer/
 5. Le graphe `BufferSource → AnalyserNode → destination hors ligne` est préparé. L’analyseur reçoit FFT, lissage et bornes de décibels.
 6. Des suspensions sont programmées aux temps `0, Δt, 2Δt…`, strictement inférieurs à la durée tronquée en secondes entières.
 7. À chaque suspension, `getByteFrequencyData()` relève un spectre, copié dans un tableau de nombres, puis le rendu hors ligne reprend.
-8. Après le rendu complet, le générateur conserve `slice(0, min(lineCount, nombreDeSpectres))`.
+8. Le contexte audio est fermé en fin d’analyse, y compris en cas d’échec. Le générateur conserve les spectres en cache puis sélectionne `slice(0, lineCount)` pour chaque demande.
 
 L’analyse ne joue pas la musique sur la sortie sonore de l’utilisateur. Elle ne détecte ni tempo, ni tonalité, ni instruments, ni paroles. Les notes affichées sont des repères statiques, pas le résultat d’une transcription musicale.
 
@@ -44,7 +46,7 @@ Conséquence : le filtre initial affiché « 1 500–4 500 Hz » sélectionne en
 
 ## Des séries au dessin
 
-Le [composant de rendu](../../app/renderer/PosterComponent.tsx) dessine dans un `<canvas>` depuis un effet React.
+Le [composant de rendu](../../app/renderer/PosterComponent.tsx) dessine dans un `<canvas>` depuis un effet de mise en page React. Les caractéristiques ci-dessous concernent le style Spectrum historique.
 
 - Il remplit le fond, puis filtre l’axe et les amplitudes entre `minFrequency` et `maxFrequency` incluses.
 - Il utilise une échelle fréquentielle linéaire et une marge fixe de 50 pixels.
@@ -58,6 +60,16 @@ La palette configurée ne contrôle pas toute la courbe : après le premier segm
 Les marges, la police de 15 pixels et les reliefs de 50 pixels ne dépendent pas du DPI. Augmenter la taille du canevas ne préserve donc pas automatiquement les proportions graphiques du poster.
 
 Le rendu n’a pas de branche dédiée aux séries vides, à une plage sans bin, à une seule fréquence ou à une amplitude uniforme avec une seule ligne. Certaines de ces entrées peuvent conduire à des divisions par zéro ou à des coordonnées non finies. Les cas exacts restent à vérifier dans un navigateur.
+
+## Style Joy Division
+
+[JoyDivisionRenderer](../../app/renderer/JoyDivisionRenderer.ts) utilise les mêmes spectres filtrés, avec une ligne par tranche temporelle. Valeurs initiales : 80 lignes, FFT 4 096, traits blancs de largeur de référence 3, fond noir ; les autres paramètres audio et la plage fréquentielle restent ceux du socle initial.
+
+Le dessin applique aux amplitudes une échelle commune (maximum des spectres affichés), une puissance 2,2 pour accentuer les contrastes et une enveloppe centrée `exp(-0,5 × ((u - 0,5) / 0,16)²) × sin(πu)`, où `u` parcourt la largeur de 0 à 1. Aucune normalisation par ligne ni aucun bruit aléatoire n’est ajouté. Le silence produit des lignes plates. Les points sont reliés par segments avec jointures arrondies.
+
+Les marges horizontales valent 5,5 % de la largeur ; les marges verticales 6,5 % de la hauteur. La hauteur maximale initiale des reliefs est le minimum de 24 % de la largeur utile et de 18 % de la hauteur. Les contours réels sont ensuite ajustés à la hauteur utile avec une échelle verticale commune. Le bloc s’adapte au portrait et au paysage. L’épaisseur est proportionnelle au plus petit côté, avec 840 px comme référence.
+
+Chaque ligne remplit la zone située sous son contour avec la couleur du fond avant de tracer celui-ci, de haut en bas. Les reliefs suivants occultent ainsi les lignes précédentes. Le trait utilise réellement les couleurs Stroke et Accent via un dégradé vertical. Aucun axe ni texte n’est tracé. Les plages vides et les amplitudes nulles ne produisent pas de division par zéro.
 
 ## Dimensions du canevas
 

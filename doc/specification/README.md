@@ -19,6 +19,6 @@ Ce dossier décrit le fonctionnement actuel de Harmonyz, son organisation techni
 - Le parcours audio complet n’a pas été exécuté dans un navigateur pendant cet audit. Les points qui nécessitent une validation à l’exécution sont signalés.
 - Les propositions d’évolution sont regroupées dans le dossier [feature](../feature/README.md).
 
-Cette intervention ajoute de la documentation ; elle ne corrige pas le moteur ni l’interface.
+Les documents ont ensuite été mis à jour avec le développement de la [feature 002](../feature/002-style-joy-division/README.md) le 31 octobre 2026. Les résultats de l’audit initial restent datés ; les vérifications du nouveau style sont consignées dans sa [recette](../feature/002-style-joy-division/validation/README.md).
 
 [Retour à la documentation](../README.md).

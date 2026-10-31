@@ -1,3 +1,5 @@
+export type PosterStyle = "spectrum" | "joy-division";
+
 export type PosterPaperFormat = "A4" | "A3" | "CUSTOM";
 export type PosterOrientation = "portrait" | "landscape";
 export type CustomSizeUnit = "cm" | "px";
@@ -31,3 +33,14 @@ export type PosterPreset = Partial<PosterState> & {
     id: string;
     description: string;
 };
+
+export type PosterFormatState = Pick<
+    PosterState,
+    | "paperFormat"
+    | "posterOrientation"
+    | "customPosterWidthMm"
+    | "customPosterHeightMm"
+    | "customPosterDpi"
+    | "customSizeUnit"
+>;
+export type PosterStyleState = Omit<PosterState, keyof PosterFormatState>;

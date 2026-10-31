@@ -1,6 +1,6 @@
 # 05 — Limites actuelles
 
-Ces constats décrivent le code au moment de la rétro-ingénierie. Les impacts navigateur indiqués comme risques n’ont pas été reproduits pendant l’audit. Les identifiants servent à relier chaque constat aux évolutions proposées dans le dossier [feature](../feature/README.md).
+Ces constats historiques décrivent le code au moment de la rétro-ingénierie. Les évolutions livrées depuis sont précisées ci-dessous ; les lignes historiques ne décrivent donc pas toutes le code courant. Les impacts navigateur indiqués comme risques n’ont pas été reproduits pendant l’audit. Les identifiants servent à relier chaque constat aux évolutions proposées dans le dossier [feature](../feature/README.md).
 
 | Référence | Constat et preuve                                                                                                                                                                        | Conséquence                                                                                              |
 | --------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
@@ -17,3 +17,12 @@ Ces constats décrivent le code au moment de la rétro-ingénierie. Les impacts 
 | L11       | Les promesses de `suspend(...).then(...)` et `resume()` ne sont pas collectées ni munies d’un traitement d’échec dans [AudioAnalyzer](../../app/renderer/AudioAnalyzer.ts).              | Risque d’erreurs asynchrones hors du `try/catch` attendu.                                                |
 | L12       | L’onglet initial est Advanced ; les panneaux recouvrent l’aperçu dans [l’éditeur](../../app/welcome/welcome.tsx).                                                                        | Parcours chargé en réglages techniques ; encombrement possible sur petit écran.                          |
 | L13       | Aucun test automatisé métier ; composants anciens non utilisés ; README racine issu du template.                                                                                         | Reprise du projet et contrôle des régressions plus difficiles.                                           |
+
+## Mise à jour après la feature 002
+
+- **L03 atténuée** : le générateur réutilise les analyses selon les paramètres audio. Les changements visuels ne redécodent plus le fichier tant que l’analyse figure dans le cache borné à quatre entrées ; l’orchestration conserve son debounce et son indicateur de génération.
+- **L04 partiellement corrigée** : `AudioContext.close()` est appelé en fin d’analyse. Les calculs devenus obsolètes ne sont toujours pas annulés.
+- **L05 partiellement corrigée** : un échec invalide le poster et empêche son export ; le message reste uniquement en console.
+- **L08** : Joy Division respecte les deux couleurs et adapte ses proportions au support. Les défauts du rendu Spectrum historique restent présents.
+- **L10** : Joy Division gère les plages vides, le silence et les valeurs non finies au tracé. Le rendu Spectrum a une garde pour moins de deux fréquences ou aucune série, mais n’a pas été entièrement refondu.
+- **L01, L06, L07, L09 et L11** restent hors périmètre de cette feature. La couverture initiale de L02 a été explicitement conservée par choix produit.

@@ -58,7 +58,7 @@ flowchart TD
 
 ## État et contrats
 
-`Welcome` possède le fichier sélectionné, deux indicateurs de génération, la visibilité des panneaux, le `PosterState` courant et sa copie différée. Les panneaux remontent des `Partial<PosterState>` fusionnés avec l’état courant.
+`Welcome` possède un état d’édition via [posterEditorState](../../app/welcome/posterEditorState.ts) : style sélectionné, format commun et réglages propres à chaque style. Il possède aussi le fichier sélectionné, deux indicateurs de génération, la visibilité des panneaux, le `PosterState` courant et sa copie différée. Les panneaux remontent des `Partial<PosterState>` fusionnés avec l’état courant.
 
 Les contrats de traitement sont les suivants :
 
@@ -84,6 +84,8 @@ type YAxisData = {
 
 Les amplitudes stockées sont des nombres entre 0 et 255. Les temps physiques ne sont pas stockés dans la sortie de l’analyseur : le rendu reconstitue une étiquette avec `index × durationBetweenLines`.
 
-Un compteur de génération évite qu’un résultat d’une ancienne demande remplace celui d’une demande plus récente. Ce mécanisme ne stoppe pas le calcul précédent et ne libère pas ses contextes audio. L’état d’erreur n’est pas modélisé séparément.
+Un compteur de génération évite qu’un résultat d’une ancienne demande remplace celui d’une demande plus récente. Ce mécanisme ne stoppe pas le calcul précédent. L’analyseur ferme désormais son contexte audio dans un bloc `finally`. L’état d’erreur n’est pas modélisé séparément.
 
-Le même objet `PosterState` regroupe analyse audio, style, format et métadonnées de preset. Il est passé aux fonctions qui n’en utilisent qu’une partie. Cette organisation explique pourquoi une modification de couleur ou d’unité de saisie relance aussi le décodage audio.
+`PosterState` reste le contrat aplati des panneaux et du rendu, reconstruit depuis le format commun et les réglages du style actif. `PosterGenerator` conserve au plus quatre promesses d’analyse par fichier (clé FFT, lissage, décibels et intervalle) dans une `WeakMap`. Les apparences, formats et nombres de lignes réutilisent ainsi les spectres. Les échecs sont retirés du cache pour permettre un nouvel essai.
+
+[JoyDivisionRenderer](../../app/renderer/JoyDivisionRenderer.ts) dessine le nouveau style depuis les spectres filtrés ; `PosterComponent` sélectionne ce rendu ou le rendu historique. Le dessin s’effectue dans un effet de mise en page afin que le canevas soit prêt avant son affichage et son export.
