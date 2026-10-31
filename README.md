@@ -1,4 +1,10 @@
-# Welcome to React Router!
+# Harmonyz
+
+Créer un poster représentant une musique à partir d’un fichier audio.
+
+La [documentation du projet](doc/README.md) regroupe la spécification de l’existant et les fonctionnalités souhaitées.
+
+## Socle React Router
 
 A modern, production-ready template for building full-stack React applications using React Router.
 
