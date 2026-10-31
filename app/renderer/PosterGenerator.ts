@@ -11,11 +11,7 @@ export type GeneratedPosterInfos = {
 export class PosterGenerator {
     private cache = new WeakMap<File, Map<string, Promise<AnalyzedAudioData>>>();
 
-    async generate(
-        file: File,
-        requestedMaxLines: number,
-        params: AudioAnalyzerParameters,
-    ): Promise<GeneratedPosterInfos> {
+    async analyze(file: File, params: AudioAnalyzerParameters): Promise<AnalyzedAudioData> {
         const key = JSON.stringify([
             params.fftSize,
             params.smoothingTimeConstant,
@@ -41,7 +37,15 @@ export class PosterGenerator {
                 if (currentCache.get(key) === analysis) currentCache.delete(key);
             });
         }
-        const audioData = await analysis;
+        return analysis;
+    }
+
+    async generate(
+        file: File,
+        requestedMaxLines: number,
+        params: AudioAnalyzerParameters,
+    ): Promise<GeneratedPosterInfos> {
+        const audioData = await this.analyze(file, params);
         return {
             xAxis: audioData.xAxis,
             series: audioData.frequencyData.slice(0, requestedMaxLines),

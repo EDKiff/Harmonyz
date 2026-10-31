@@ -1,0 +1,70 @@
+[
+    {
+        "style": "spectrum",
+        "cycles": [
+            {
+                "time": 12,
+                "imageIdentical": false,
+                "changedPixels": 108039,
+                "beforeHash": "b769b1d112481c72bebb3bb8643d9543260c73aea163a5dce6b4835222471d43",
+                "afterHash": "8fddb5fb96bfbd3e3cef230bd733ebb5824d5de0c75d8d4732545252aced0608",
+                "beforePosition": 12.111375,
+                "afterPosition": 12.111661,
+                "paused": true,
+                "canvasBoundsStable": true,
+                "beforeMinY": 90.76393411764715,
+                "clippedPoints": 0,
+                "clippingBoundary": null
+            },
+            {
+                "time": 60,
+                "imageIdentical": false,
+                "changedPixels": 123948,
+                "beforeHash": "623ba3fa2a71ab56f30d5f4ec78bb8777948619f03528794e4769b74225c2141",
+                "afterHash": "8fddb5fb96bfbd3e3cef230bd733ebb5824d5de0c75d8d4732545252aced0608",
+                "beforePosition": 60.110511,
+                "afterPosition": 60.110702,
+                "paused": true,
+                "canvasBoundsStable": true,
+                "beforeMinY": 73.4954745098041,
+                "clippedPoints": 0,
+                "clippingBoundary": null
+            }
+        ],
+        "errors": []
+    },
+    {
+        "style": "joy-division",
+        "cycles": [
+            {
+                "time": 12,
+                "imageIdentical": false,
+                "changedPixels": 234850,
+                "beforeHash": "b18d5c2db3f434a2f97168b7950417b73a2af0cedbac1a5b2d7d00e232690dba",
+                "afterHash": "6bae73f852efcc9987a31592e61116b1f83e4e7f078538fd0e4ccad385dba255",
+                "beforePosition": 12.240483,
+                "afterPosition": 12.240752,
+                "paused": true,
+                "canvasBoundsStable": true,
+                "beforeMinY": 71.20583210111346,
+                "clippedPoints": 2,
+                "clippingBoundary": 77.22
+            },
+            {
+                "time": 60,
+                "imageIdentical": false,
+                "changedPixels": 241725,
+                "beforeHash": "c21942342d5fa62ab3508714a9156a89b30666f456913354db81b794b5c295b6",
+                "afterHash": "6bae73f852efcc9987a31592e61116b1f83e4e7f078538fd0e4ccad385dba255",
+                "beforePosition": 60.241313,
+                "afterPosition": 60.24148,
+                "paused": true,
+                "canvasBoundsStable": true,
+                "beforeMinY": 79.68317806458589,
+                "clippedPoints": 0,
+                "clippingBoundary": 77.22
+            }
+        ],
+        "errors": []
+    }
+]

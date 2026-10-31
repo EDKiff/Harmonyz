@@ -1,0 +1,102 @@
+[
+    {
+        "style": "spectrum",
+        "rows": 20,
+        "playing": {
+            "first": 100,
+            "last": 1138,
+            "position": 12.304718
+        },
+        "stopped": {
+            "first": 100,
+            "last": 1138,
+            "position": 12.304947
+        },
+        "maxBaselineShift": 0,
+        "pngMatchesFixedPreview": true,
+        "canvasBoundsStable": true,
+        "canvasSize": [840, 1188],
+        "notePositionsStable": true,
+        "curveXRange": [50, 790],
+        "notes": [
+            {
+                "text": "G6",
+                "x": 65.10484235433304,
+                "y": 1163
+            },
+            {
+                "text": "A6",
+                "x": 112.92273817739655,
+                "y": 1163
+            },
+            {
+                "text": "B6",
+                "x": 166.59522587005816,
+                "y": 1163
+            },
+            {
+                "text": "C7",
+                "x": 195.8482631700023,
+                "y": 1163
+            },
+            {
+                "text": "D7",
+                "x": 259.6785051102567,
+                "y": 1163
+            },
+            {
+                "text": "E7",
+                "x": 331.32317039666106,
+                "y": 1163
+            },
+            {
+                "text": "F7",
+                "x": 370.37287482335927,
+                "y": 1163
+            },
+            {
+                "text": "G7",
+                "x": 455.57200354924584,
+                "y": 1163
+            },
+            {
+                "text": "A7",
+                "x": 551.2077951953729,
+                "y": 1163
+            },
+            {
+                "text": "B7",
+                "x": 658.5552608367018,
+                "y": 1163
+            },
+            {
+                "text": "C8",
+                "x": 717.0613354365902,
+                "y": 1163
+            }
+        ],
+        "errors": []
+    },
+    {
+        "style": "joy-division",
+        "rows": 80,
+        "playing": {
+            "first": 89.98,
+            "last": 1098.02,
+            "position": 12.605562
+        },
+        "stopped": {
+            "first": 89.98,
+            "last": 1098.02,
+            "position": 12.60578
+        },
+        "maxBaselineShift": 0,
+        "pngMatchesFixedPreview": true,
+        "canvasBoundsStable": true,
+        "canvasSize": [840, 1188],
+        "notePositionsStable": true,
+        "curveXRange": [46.2, 793.8],
+        "notes": [],
+        "errors": []
+    }
+]

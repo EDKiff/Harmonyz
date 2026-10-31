@@ -1,0 +1,36 @@
+[
+    {
+        "style": "spectrum",
+        "rows": 20,
+        "playing": {
+            "first": 100,
+            "last": 1138,
+            "position": 12.380694
+        },
+        "stopped": {
+            "first": 55.32374100719424,
+            "last": 1119.38510556109,
+            "position": 12.381051
+        },
+        "maxBaselineShift": 44.67625899280576,
+        "canvasBoundsStable": true,
+        "errors": []
+    },
+    {
+        "style": "joy-division",
+        "rows": 80,
+        "playing": {
+            "first": 230.10368967768744,
+            "last": 1110.78,
+            "position": 12.477538
+        },
+        "stopped": {
+            "first": 77.22,
+            "last": 1110.78,
+            "position": 12.477768
+        },
+        "maxBaselineShift": 152.88368967768744,
+        "canvasBoundsStable": true,
+        "errors": []
+    }
+]

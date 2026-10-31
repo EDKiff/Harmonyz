@@ -1,5 +1,6 @@
 export type AnalyzedAudioData = {
     xAxis: Array<number>; // Fréquences correspondantes à chaque bin de l'analyse
+    duration: number; // Durée décodée exacte, fraction finale comprise
     frequencyData: Array<Array<number>>; // Données de fréquence pour chaque intervalle de temps
 };
 
@@ -28,6 +29,9 @@ class AudioAnalyzer {
             durationBetweenLines: 0.5,
         },
     ) {
+        if (!(params.durationBetweenLines > 0) || !Number.isFinite(params.durationBetweenLines)) {
+            throw new Error("Seconds between lines must be greater than zero.");
+        }
         this.audioContext = new window.AudioContext();
         this.fftSize = params.fftSize;
         this.smoothingTimeConstant = params.smoothingTimeConstant;
@@ -48,15 +52,13 @@ class AudioAnalyzer {
 
     private async analyzeBuffer(arrayBuffer: ArrayBuffer): Promise<AnalyzedAudioData> {
         const audioBuffer = await this.audioContext.decodeAudioData(arrayBuffer);
-        //Debug info on decoded audio
-        console.log("Decoded audio buffer:", {
-            duration: audioBuffer.duration,
-            sampleRate: audioBuffer.sampleRate,
-            numberOfChannels: audioBuffer.numberOfChannels,
-            length: audioBuffer.length,
-        });
-
-        const offlineCtx = new OfflineAudioContext(1, audioBuffer.length, audioBuffer.sampleRate);
+        // suspend() rounds up to a 128-frame render quantum. A final suspension must
+        // still occur before rendering ends, even when the audio ends within that quantum.
+        const offlineCtx = new OfflineAudioContext(
+            1,
+            audioBuffer.length + 128,
+            audioBuffer.sampleRate,
+        );
 
         const source = offlineCtx.createBufferSource();
         const oneChannelBuffer = offlineCtx.createBuffer(
@@ -70,39 +72,45 @@ class AudioAnalyzer {
 
         const analyzer = offlineCtx.createAnalyser();
         analyzer.fftSize = this.fftSize;
-        analyzer.minDecibels = this.minDecibels;
+        // Apply both bounds without crossing the analyser's default range in between.
+        analyzer.minDecibels = Math.min(analyzer.minDecibels, this.minDecibels);
         analyzer.maxDecibels = this.maxDecibels;
+        analyzer.minDecibels = this.minDecibels;
         analyzer.smoothingTimeConstant = this.smoothingTimeConstant;
 
         source.connect(analyzer);
         analyzer.connect(offlineCtx.destination);
         source.start(0);
 
-        const durationInSeconds = audioBuffer.duration | 0;
+        const durationInSeconds = audioBuffer.duration;
         const intervalInSeconds = this.durationBetweenLines;
         const byteFrequencyDataForInterval = new Array<Array<number>>();
 
-        //Premiere enregistrement sont les valeurs de l'axe x
-        console.log("Found audioBuffer.sampleRate:", audioBuffer.sampleRate);
+        // Les bins FFT couvrent 0 à la fréquence de Nyquist.
         const xAxis = new Array<number>();
         for (let i = 0; i < analyzer.frequencyBinCount; i++) {
-            const freqValue = i * (audioBuffer.sampleRate / analyzer.frequencyBinCount);
+            const freqValue = i * (audioBuffer.sampleRate / this.fftSize);
             xAxis.push(freqValue);
         }
 
-        for (let time = 0; time < durationInSeconds; time += intervalInSeconds) {
-            offlineCtx.suspend(time).then(() => {
-                const dataArray = new Uint8Array(analyzer.frequencyBinCount);
-                //We could use getFloatFrequencyData for more precision but it is more expensive to compute
-                analyzer.getByteFrequencyData(dataArray);
-                byteFrequencyDataForInterval.push(Array.from(dataArray));
-                offlineCtx.resume();
-            });
+        const suspensions: Promise<void>[] = [];
+        for (let sample = 0; sample * intervalInSeconds < durationInSeconds; sample++) {
+            const time = sample * intervalInSeconds;
+            suspensions.push(
+                offlineCtx.suspend(time).then(async () => {
+                    const dataArray = new Uint8Array(analyzer.frequencyBinCount);
+                    //We could use getFloatFrequencyData for more precision but it is more expensive to compute
+                    analyzer.getByteFrequencyData(dataArray);
+                    byteFrequencyDataForInterval.push(Array.from(dataArray));
+                    await offlineCtx.resume();
+                }),
+            );
         }
 
-        await offlineCtx.startRendering();
+        await Promise.all([offlineCtx.startRendering(), ...suspensions]);
         return {
             xAxis,
+            duration: durationInSeconds,
             frequencyData: byteFrequencyDataForInterval,
         };
     }

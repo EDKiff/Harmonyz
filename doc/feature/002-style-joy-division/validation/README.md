@@ -50,3 +50,5 @@ Résultats sur la dernière version :
 Aucun test Safari/Firefox ni retour utilisateur sur les images n’a encore été effectué. Les limites historiques hors périmètre sont suivies dans les [limites de l’existant](../../../specification/05-limites-actuelles.md).
 
 [Retour à la feature 002](../README.md).
+
+Le script a été adapté au menu PNG/GIF ajouté par la [feature 003](../../003-mode-anime-musical/README.md) : il choisit explicitement Download PNG après Save. Les captures et résultats ci-dessus restent ceux de la recette historique du style ; la [recette 003](../../003-mode-anime-musical/validation/README.md) couvre les exports actuels.

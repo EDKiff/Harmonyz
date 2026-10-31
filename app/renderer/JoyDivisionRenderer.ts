@@ -1,12 +1,19 @@
-import type { PosterComponentParameters } from "./PosterComponent";
+import type { PosterCanvasContext, PosterComponentParameters } from "./PosterRenderer";
+
+/** Shared by drawing and the full-track bound used to reserve space above the first row. */
+export function joyDivisionEnvelope(position: number) {
+    return Math.exp(-0.5 * ((position - 0.5) / 0.16) ** 2) * Math.sin(Math.PI * position);
+}
 
 /** Audio-only ridgelines: one spectrum per row, one shared amplitude scale. */
 export function drawJoyDivision(
-    ctx: CanvasRenderingContext2D,
+    ctx: PosterCanvasContext,
     spectra: number[][],
     width: number,
     height: number,
     parameters: PosterComponentParameters,
+    amplitudePeak = 255,
+    maxReliefRatio = 1,
 ) {
     if (spectra.length === 0) return;
 
@@ -14,29 +21,35 @@ export function drawJoyDivision(
     const marginY = height * 0.065;
     const plotWidth = width - marginX * 2;
     const peakHeight = Math.min(plotWidth * 0.24, height * 0.18);
-    const plotHeight = height - marginY * 2;
-    const spacing = plotHeight / Math.max(1, spectra.length - 1);
-    let peak = 0;
-    for (const spectrum of spectra) {
-        for (const value of spectrum) {
-            if (Number.isFinite(value)) peak = Math.max(peak, value);
-        }
-    }
+    const rowCount = Math.max(1, parameters.lineCount ?? spectra.length, spectra.length);
+    const lineWidth = parameters.dataLinesWidth * (Math.min(width, height) / 840);
+    const halfStroke = lineWidth / 2;
+    const reliefBound = Number.isFinite(maxReliefRatio)
+        ? Math.min(1, Math.max(0, maxReliefRatio))
+        : 1;
+    // This bound comes from the entire song, never from the current animation frame.
+    // Reserve the actual tallest relief and stroke, rather than clipping the upper curves.
+    const firstBaseline = marginY + peakHeight * reliefBound + halfStroke;
+    const lastBaseline = height - marginY - halfStroke;
+    const baselineSpan = Math.max(0, lastBaseline - firstBaseline);
+    const spacing = baselineSpan / Math.max(1, rowCount - 1);
 
     ctx.save();
     // Scale the stroke with the support, including high-resolution exports.
-    ctx.lineWidth = parameters.dataLinesWidth * (Math.min(width, height) / 840);
+    ctx.lineWidth = lineWidth;
     ctx.lineJoin = "round";
     ctx.lineCap = "round";
     ctx.fillStyle = parameters.backgroundColor;
-
     const rows = spectra.map((spectrum, row) => {
-        const baseline = spectra.length === 1 ? plotHeight / 2 : row * spacing;
+        const baseline =
+            rowCount === 1 ? firstBaseline + baselineSpan / 2 : firstBaseline + row * spacing;
         const points = spectrum.map((value, index) => {
             const position = spectrum.length === 1 ? 0.5 : index / (spectrum.length - 1);
-            const envelope =
-                Math.exp(-0.5 * ((position - 0.5) / 0.16) ** 2) * Math.sin(Math.PI * position);
-            const amplitude = peak > 0 && Number.isFinite(value) ? Math.max(0, value) / peak : 0;
+            const envelope = joyDivisionEnvelope(position);
+            const amplitude =
+                amplitudePeak > 0 && Number.isFinite(value)
+                    ? Math.min(1, Math.max(0, value) / amplitudePeak)
+                    : 0;
             return {
                 x: marginX + position * plotWidth,
                 y: baseline - Math.pow(amplitude, 2.2) * envelope * peakHeight,
@@ -45,16 +58,7 @@ export function drawJoyDivision(
 
         return { baseline, points };
     });
-    // Fit the actual contours, rather than reserving an empty peak-height above quiet opening rows.
-    let top = 0;
-    for (const row of rows) for (const point of row.points) top = Math.min(top, point.y);
-    const scaleY = plotHeight / (plotHeight - top);
-    rows.forEach(({ baseline: rawBaseline, points: rawPoints }) => {
-        const baseline = marginY + (rawBaseline - top) * scaleY;
-        const points = rawPoints.map((point) => ({
-            x: point.x,
-            y: marginY + (point.y - top) * scaleY,
-        }));
+    rows.forEach(({ baseline, points }) => {
         // Include flat endpoints even for a single bin or an empty frequency range.
         const trace = () => {
             ctx.moveTo(marginX, baseline);
