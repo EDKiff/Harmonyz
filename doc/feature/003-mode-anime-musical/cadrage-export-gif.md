@@ -1,6 +1,6 @@
 # Cadrage de l’export GIF
 
-Notes de cadrage du **31 octobre 2026** pour la feature 003. Aucun export animé ni benchmark n’a été exécuté.
+Notes historiques de cadrage du **31 octobre 2026**, rédigées avant l’implémentation. La génération est maintenant livrée : voir les [choix réalisés](README.md#choix-livrés-et-limites-restantes) et la [validation](validation/README.md). Les questions et calculs ci-dessous conservent leur contexte préparatoire ; ils ne décrivent pas l’architecture actuelle.
 
 ## Référence fonctionnelle
 
@@ -48,7 +48,7 @@ Le stockage des données encodées reste à choisir : la demande fonctionnelle n
 
 Déduction des calculs ci-dessus : traiter les images successivement peut éviter de conserver toutes les images brutes simultanément. Cela ne détermine pas la taille du GIF compressé, la mémoire utilisée pour ses données encodées ou le temps de génération. Ces propriétés dépendent du fonctionnement et de l’encodeur qui seront retenus.
 
-## Points à vérifier avant de déclarer l’export livré
+## Plan de vérification établi au cadrage
 
 - Qualité du mouvement et du raccord sur les deux styles, aux dimensions du poster et à la cadence retenue.
 - Empilement complet dès la première image, avec les courbes de fin au-dessus de celles du début, selon le [comportement initial validé](README.md#décisions-validées).
@@ -62,6 +62,6 @@ Déduction des calculs ci-dessus : traiter les images successivement peut évite
 - Stratégie de traitement des images évitant de conserver l’ensemble des images brutes simultanément ; faisabilité à vérifier dans le choix de l’encodeur.
 - Maintien d’un éditeur utilisable pendant la génération, affichage de la progression et annulation, selon le [comportement validé](README.md#décisions-validées), ainsi que gestion des erreurs à définir.
 
-Ces points sont des vérifications à préparer, pas des résultats déjà obtenus. Les comportements validés restent définis dans le [README de la feature](README.md#décisions-validées).
+Cette liste est le plan historique de vérification, pas un rapport de résultats. Consulter la [recette](validation/README.md) pour les contrôles réellement exécutés et leurs limites. Les comportements validés restent définis dans le [README de la feature](README.md#décisions-validées).
 
 [Retour à la feature 003](README.md).

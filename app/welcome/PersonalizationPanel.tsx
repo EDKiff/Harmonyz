@@ -45,7 +45,7 @@ export function PersonalizationPanel({
                                 Personalization
                             </h2>
                             <p className="text-xs text-slate-500">
-                                Floating controls over full-screen poster.
+                                Customize the poster and animation.
                             </p>
                         </div>
                     </div>

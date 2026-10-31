@@ -2,20 +2,20 @@
 
 ## Objectif et statut
 
-**Cadrage fonctionnel documenté le 31 octobre 2026 — validation d’ensemble attendue ; aucun développement engagé.**
+**Première version implémentée le 31 octobre 2026 — recette automatisée et limites consignées dans la [validation](validation/README.md).**
 
 Ajouter un mode permettant d’animer la représentation d’une musique pendant son écoute et de télécharger une animation en boucle au format GIF. L’utilisateur décrit une image qui se génère lorsque la musique est lancée et une boucle infinie, évoquée comme un « gif infini ».
 
-Les décisions ci-dessous ont été confirmées pendant l’entretien. Un récapitulatif d’ensemble doit encore confirmer la compréhension partagée du périmètre. Les choix techniques et leur validation à l’exécution restent à réaliser ; ce document décrit une cible.
+La demande d’implémentation a engagé la réalisation des décisions ci-dessous. Ce document conserve le périmètre fonctionnel validé ; les [spécifications](../../specification/README.md) décrivent le comportement livré. La recette sur des téléphones physiques et plusieurs moteurs de navigateur reste à poursuivre.
 
 ## Existant concerné
 
-Les sources ont été examinées pendant ce cadrage :
+Le parcours livré s’appuie sur :
 
-- L’éditeur produit un poster fixe et l’exporte en PNG, sans lecteur audio : [Welcome](../../../app/welcome/welcome.tsx).
-- L’analyse est effectuée hors ligne, sans lecture audible : [AudioAnalyzer](../../../app/renderer/AudioAnalyzer.ts).
-- Les styles disponibles sont Spectrum et Joy Division : [types](../../../app/welcome/welcome.types.ts). Le choix du style est distinct des presets, selon le [glossaire de la feature 002](../002-style-joy-division/glossaire.md).
-- Le dessin utilise un canevas actualisé à partir des données et des réglages, sans boucle d’animation : [PosterComponent](../../../app/renderer/PosterComponent.tsx).
+- [Welcome](../../../app/welcome/welcome.tsx) et [useSongPlayback](../../../app/welcome/useSongPlayback.ts) pour le lecteur en boucle, Play/Stop, la navigation et les exports.
+- [AudioAnalyzer](../../../app/renderer/AudioAnalyzer.ts) pour les spectres et la durée exacte du morceau entier, sans lecture audible pendant l’analyse.
+- [animationFrame](../../../app/renderer/animation.ts) et [drawPoster](../../../app/renderer/PosterRenderer.ts) pour les mêmes courbes dans l’aperçu animé et le GIF, avec Spectrum et Joy Division.
+- [GifPreparation](../../../app/animation/GifPreparation.ts) et son [worker](../../../app/animation/gif.worker.ts) pour préparer les images pendant l’écoute, les stocker encodées dans IndexedDB, puis compléter l’export indépendamment de l’éditeur.
 
 Spécifications liées : [parcours actuel](../../specification/01-existant-fonctionnel.md), [analyse et rendu](../../specification/03-analyse-audio-et-rendu.md), [paramètres et presets](../../specification/04-parametres.md). Cette feature complète l’[objectif de création de poster musical — feature 001](../001-creation-de-poster/README.md) et s’applique aux styles existants, dont Joy Division introduit par la [feature 002](../002-style-joy-division/README.md).
 
@@ -88,7 +88,7 @@ La gestion des images brutes et du fichier encodé fait partie des [travaux tech
 
 Les termes clarifiés sont regroupés dans le [glossaire de la feature](glossaire.md).
 
-## Critères d’acceptation déjà établis
+## Critères d’acceptation
 
 - À l’ouverture de l’application, le mode poster fixe est sélectionné.
 - Le parcours du mode animé, le lecteur, les réglages et l’export GIF sont utilisables sur ordinateur et téléphone dès la première version, avec des commandes accessibles sur petit écran.
@@ -120,23 +120,18 @@ Les termes clarifiés sont regroupés dans le [glossaire de la feature](glossair
 - Pendant la génération, l’éditeur reste utilisable et une progression ainsi qu’un bouton Annuler sont visibles. Modifier les réglages à ce moment ne change pas le GIF en cours d’export ; annuler l’export conserve les réglages et l’état du lecteur.
 - Au raccord entre la fin et le début du GIF, les courbes se transforment progressivement pour conserver la continuité visuelle de l’animation.
 
-Ces critères décrivent le comportement attendu. Ils n’ont pas encore fait l’objet d’une recette du mode animé.
+Ces critères restent la référence d’acceptation. La [recette](validation/README.md) distingue les contrôles exécutés, leurs résultats et les vérifications qui restent à effectuer sur des appareils physiques.
 
 ## Préparation du cadrage de l’export
 
-Les [notes sur l’export GIF](cadrage-export-gif.md) regroupent les choix validés de dimensions, de cadence et de génération progressive, les contraintes vérifiées du format et des calculs théoriques de volume d’images. Aucune mesure de performances ni aucun export animé n’a encore été réalisé. Les calculs utilisent la cadence retenue de 20 images/s et une durée illustrative de quatre minutes.
+Les [notes sur l’export GIF](cadrage-export-gif.md) regroupent les choix validés de dimensions, de cadence et de génération progressive, les contraintes vérifiées du format et des calculs théoriques de volume d’images. Ces notes historiques précèdent l’implémentation ; les [résultats de validation](validation/README.md) consignent les exports et mesures effectivement réalisés. Les calculs préparatoires utilisent la cadence retenue de 20 images/s et une durée illustrative de quatre minutes.
 
-## Travaux techniques restants
+## Choix livrés et limites restantes
 
-Les choix fonctionnels détaillés sont consignés ci-dessus ; seule leur confirmation d’ensemble reste attendue dans l’entretien. Les sujets suivants relèvent de la préparation technique et des vérifications à réaliser :
+La première version réalise le périmètre ci-dessus. L’[architecture livrée](../../specification/02-architecture.md), le [calcul du mouvement, le raccord et les exports](../../specification/03-analyse-audio-et-rendu.md) et les [limites actuelles](../../specification/05-limites-actuelles.md) sont décrits dans les spécifications de référence.
 
-- Choisir un encodeur et une organisation de la génération progressive qui permettent de traiter les images successivement, sans conserver toutes les images brutes simultanément.
-- Définir la réutilisation des données compatibles entre écoute et export, l’actualisation après changement de réglages et l’isolation d’un export de l’ancien morceau lorsque l’éditeur change de fichier.
-- Déterminer comment conserver ou écrire progressivement les données du GIF encodé sur les navigateurs d’ordinateur et de téléphone ciblés. Aucun choix de stockage ou de bibliothèque n’est arrêté à ce stade.
-- Vérifier la synchronisation audio/visuel, les recalculs pendant l’écoute, la préparation des courbes de fin et le comportement des morceaux courts ou silencieux, y compris les durées qui ne sont pas des multiples de l’intervalle entre les lignes.
-- Mesurer la cadence effective, le temps de génération, la mémoire et la taille des fichiers. Définir les limites de dimensions admissibles et les erreurs actionnables, en tenant compte des [limites du canevas existant](../../specification/05-limites-actuelles.md).
-- Préparer une recette sur les deux styles, sur ordinateur et téléphone, incluant lecture, navigation, boucle, exports avant et après écoute, annulation et changement de fichier pendant un export.
+Les vérifications restantes concernent la compatibilité de plusieurs navigateurs et téléphones physiques, la fluidité sur ces appareils, ainsi que les mesures sur des morceaux longs aux dimensions du poster. La cadence de l’aperçu vise 20 images/s ; le débit d’encodage dépend de l’appareil et de la résolution. L’espace nécessaire au GIF encodé dépend de sa durée et de son contenu ; une erreur de quota IndexedDB reste possible. Une fermeture forcée du navigateur peut laisser une base temporaire que le nettoyage normal de fin de session n’a pas pu supprimer.
 
-Ces travaux ne sont ni une architecture implémentée ni des résultats de tests. Les [notes d’export](cadrage-export-gif.md) détaillent les contraintes vérifiées et les calculs préparatoires ; le [glossaire](glossaire.md) définit le vocabulaire retenu.
+La [validation](validation/README.md) conserve les commandes de reproduction et les limites de la campagne effectuée. Le [glossaire](glossaire.md) définit les termes fonctionnels ; les [notes d’export](cadrage-export-gif.md) conservent les calculs du cadrage initial.
 
 [Retour aux fonctionnalités](../README.md).

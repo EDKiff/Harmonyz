@@ -1,12 +1,13 @@
-import type { PosterComponentParameters } from "./PosterComponent";
+import type { PosterCanvasContext, PosterComponentParameters } from "./PosterRenderer";
 
 /** Audio-only ridgelines: one spectrum per row, one shared amplitude scale. */
 export function drawJoyDivision(
-    ctx: CanvasRenderingContext2D,
+    ctx: PosterCanvasContext,
     spectra: number[][],
     width: number,
     height: number,
     parameters: PosterComponentParameters,
+    animation?: { amplitudePeak: number; fixedRows: boolean },
 ) {
     if (spectra.length === 0) return;
 
@@ -16,10 +17,12 @@ export function drawJoyDivision(
     const peakHeight = Math.min(plotWidth * 0.24, height * 0.18);
     const plotHeight = height - marginY * 2;
     const spacing = plotHeight / Math.max(1, spectra.length - 1);
-    let peak = 0;
-    for (const spectrum of spectra) {
-        for (const value of spectrum) {
-            if (Number.isFinite(value)) peak = Math.max(peak, value);
+    let peak = animation?.amplitudePeak ?? 0;
+    if (!animation) {
+        for (const spectrum of spectra) {
+            for (const value of spectrum) {
+                if (Number.isFinite(value)) peak = Math.max(peak, value);
+            }
         }
     }
 
@@ -46,8 +49,10 @@ export function drawJoyDivision(
         return { baseline, points };
     });
     // Fit the actual contours, rather than reserving an empty peak-height above quiet opening rows.
-    let top = 0;
-    for (const row of rows) for (const point of row.points) top = Math.min(top, point.y);
+    let top = animation?.fixedRows ? -peakHeight : 0;
+    if (!animation?.fixedRows) {
+        for (const row of rows) for (const point of row.points) top = Math.min(top, point.y);
+    }
     const scaleY = plotHeight / (plotHeight - top);
     rows.forEach(({ baseline: rawBaseline, points: rawPoints }) => {
         const baseline = marginY + (rawBaseline - top) * scaleY;

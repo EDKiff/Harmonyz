@@ -1,6 +1,6 @@
 # 05 — Limites actuelles
 
-Ces constats historiques décrivent le code au moment de la rétro-ingénierie. Les évolutions livrées depuis sont précisées ci-dessous ; les lignes historiques ne décrivent donc pas toutes le code courant. Les impacts navigateur indiqués comme risques n’ont pas été reproduits pendant l’audit. Les identifiants servent à relier chaque constat aux évolutions proposées dans le dossier [feature](../feature/README.md).
+Ces constats historiques décrivent le code au moment de la rétro-ingénierie du **31 octobre 2026**, au commit `882e6188a57e60ac6cca575a505b2c44d9156fed`. Les évolutions livrées depuis sont précisées ci-dessous ; les lignes historiques ne décrivent donc pas toutes le code courant. Les impacts navigateur indiqués comme risques n’ont pas été reproduits pendant l’audit. Les identifiants servent à relier chaque constat aux évolutions proposées dans le dossier [feature](../feature/README.md).
 
 | Référence | Constat et preuve                                                                                                                                                                        | Conséquence                                                                                              |
 | --------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
@@ -26,3 +26,33 @@ Ces constats historiques décrivent le code au moment de la rétro-ingénierie. 
 - **L08** : Joy Division respecte les deux couleurs et adapte ses proportions au support. Les défauts du rendu Spectrum historique restent présents.
 - **L10** : Joy Division gère les plages vides, le silence et les valeurs non finies au tracé. Le rendu Spectrum a une garde pour moins de deux fréquences ou aucune série, mais n’a pas été entièrement refondu.
 - **L01, L06, L07, L09 et L11** restent hors périmètre de cette feature. La couverture initiale de L02 a été explicitement conservée par choix produit.
+
+## Mise à jour après la feature 003
+
+État vérifié dans les sources du développement du **31 octobre 2026**, après le commit de cadrage `ed0cdf1ecb34744c33d09748937566dae8fdd621`. Les mesures et scénarios réellement exécutés sont consignés dans le [document 06](06-developpement-et-verification.md).
+
+- **L01 corrigée** : [AudioAnalyzer](../../app/renderer/AudioAnalyzer.ts) calcule désormais les fréquences par `i × sampleRate / fftSize`.
+- **L02 conservée pour le fixe** : le poster fixe et le PNG utilisent les premières tranches dans la limite du nombre de lignes. L’aperçu animé et le GIF exploitent l’analyse entière et la durée réelle.
+- **L03 atténuée** : le cache d’analyse de la feature 002 reste utilisé. Le voile bloquant est remplacé par un état de recalcul dans la barre supérieure ; lecture et édition continuent, puis le nouveau rendu rejoint la position courante. Les téléchargements attendent que les réglages courants soient prêts.
+- **L04 partiellement corrigée** : la fermeture du contexte est conservée ; les analyses obsolètes restent ignorées sans être annulées. Un changement rapide de paramètres peut donc lancer des calculs devenus inutiles.
+- **L05 corrigée dans le parcours courant** : erreurs d’analyse, de lecture, de dimensions et d’export affichées ; un échec d’analyse invalide le résultat. L’action Try again relance la préparation.
+- **L06 bornée** : [validateGifDimensions](../../app/animation/gifTimeline.ts) est appliquée à l’aperçu et aux exports avant allocation. Elle refuse plus de 4 096 px par côté ou de 16 millions de pixels ; les champs en mm et DPI conservent leurs bornes historiques. Le refus est affiché, sans réduction silencieuse des dimensions choisies.
+- **L07 inchangée** : A4 et A3 restent à 4 px/mm ; le DPI règle seulement le format personnalisé.
+- **L08 partiellement corrigée** : Spectrum utilise désormais réellement les couleurs Stroke et Accent sur tous ses segments. Ses dimensions graphiques fixes restent en partie héritées du rendu historique. Joy Division conserve son adaptation au support et utilise une géométrie stable en animé.
+- **L09 partiellement corrigée** : la durée n’est plus tronquée ; la fraction finale et les fichiers de moins d’une seconde sont analysés. Le contexte hors ligne est prolongé de 128 échantillons pour permettre la dernière suspension, tandis que la durée exposée reste celle du morceau. Seul le canal d’index 0 reste analysé ; la lecture audible utilise le fichier original.
+- **L10 atténuée** : le rendu partagé garde les plages vides et les valeurs non finies ; les normalisations dégénérées de Spectrum disposent d’une garde. Une plage sans assez de bins peut produire un fond sans courbes, sans constituer un échec d’analyse.
+- **L11 corrigée** : les promesses de suspension et de reprise sont attendues avec le rendu hors ligne, sous le traitement d’erreur de l’analyse.
+- **L12 atténuée** : l’onglet initial reste Advanced, mais la disposition place les panneaux à côté de l’aperçu sur grand écran et sous celui-ci dans une page défilante sur petit écran. Les commandes Play/Stop, navigation, volume et téléchargement sont regroupées dans la barre supérieure.
+- **L13 partiellement corrigée** : des tests et une recette automatisée du mode animé complètent les vérifications ; les composants anciens sans import restent présents. Le périmètre exécuté est détaillé dans le [document 06](06-developpement-et-verification.md).
+
+## Contraintes propres à l’animation et au GIF
+
+La cadence de 20 images/s est une cible d’aperçu et la cadence nominale encodée. L’élément audio reste l’horloge de l’aperçu ; une charge élevée ou un onglet en arrière-plan peut diminuer le nombre d’images effectivement dessinées. Le GIF conserve ses délais indépendamment du temps mis pour le produire. Sa durée totale est arrondie au centième de seconde ; la dernière image peut avoir un délai inférieur aux 50 ms habituelles, dont la lecture effective dépend aussi du logiciel qui ouvre le GIF.
+
+L’export demande Web Workers, OffscreenCanvas et IndexedDB. Les fichiers ne sont pas envoyés à un serveur. Un navigateur sans ces capacités, ou avec stockage refusé, ne peut pas terminer ce parcours GIF ; l’éditeur affiche une erreur et le PNG reste disponible si le canevas est pris en charge. Les tests de viewport mobile ne remplacent pas des mesures sur des téléphones physiques et plusieurs navigateurs.
+
+Le [worker GIF](../../app/animation/gif.worker.ts) ne conserve qu’une image brute à la fois, puis stocke son fragment encodé dans IndexedDB. L’analyse audio complète, sa copie dans le worker, le canevas, les buffers temporaires et le Blob final consomment néanmoins de la mémoire. La limite de dimensions borne les allocations unitaires ; elle ne garantit pas qu’un morceau long puisse être exporté sur tout appareil. Le poids encodé et le quota de stockage dépendent du contenu et du navigateur. Une erreur de quota propose de libérer de l’espace ou de réduire le format, sans tronquer le morceau ni diminuer sa cadence.
+
+Le stockage temporaire est supprimé à la destruction de la préparation et lors de `pagehide`. Un arrêt forcé du navigateur peut empêcher ce nettoyage et laisser une base `harmonyz-gif-*` abandonnée. Ce stockage ne permet pas de reprendre un projet ou un export après rechargement.
+
+Un export est figé au lancement et poursuit son travail après un changement de fichier ou de réglages. Le nouvel éditeur peut donc coexister avec l’ancien worker jusqu’à la fin ou l’annulation de cet export. Cette isolation garantit le résultat demandé mais peut augmenter temporairement l’usage des ressources. L’annulation est traitée entre deux images ; son délai dépend du temps de rendu et d’encodage de l’image courante.

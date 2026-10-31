@@ -9,7 +9,7 @@ npm ci
 npm run dev
 ```
 
-Ouvrir l’adresse indiquée par Vite, habituellement `http://localhost:5173`. Aucun secret, fichier `.env` ou service métier externe n’est requis par le code inspecté. Le navigateur doit prendre en charge `AudioContext`, `OfflineAudioContext` et Canvas 2D.
+Ouvrir l’adresse indiquée par Vite, habituellement `http://localhost:5173`. Aucun secret, fichier `.env` ou service métier externe n’est requis par le code inspecté. Le navigateur doit prendre en charge `AudioContext`, `OfflineAudioContext` et Canvas 2D. L’export GIF utilise aussi les Web Workers, `OffscreenCanvas` et IndexedDB ; il affiche une erreur lorsqu’il ne peut pas être produit.
 
 `song.mp3` à la racine peut être sélectionné manuellement dans l’import. Il n’est pas servi comme une démonstration intégrée.
 
@@ -21,10 +21,11 @@ Ouvrir l’adresse indiquée par Vite, habituellement `http://localhost:5173`. A
 | `npm run typecheck` | Génération des types React Router puis compilation TypeScript sans émission. |
 | `npm run lint`      | Vérification Prettier de tout le dépôt ; pas d’analyse ESLint.               |
 | `npm run lint:fix`  | Réécriture du formatage de tout le dépôt.                                    |
+| `npm test`          | Tests comportementaux Node sur animation, rendu et chronologie GIF.          |
 | `npm run build`     | Production de `build/client/` et `build/server/`.                            |
 | `npm start`         | Service du build via `react-router-serve`, normalement sur le port 3000.     |
 
-Aucun script de test ni framework de test métier n’est présent dans `package.json`. Le fichier `app/welcome/test.html` n’est pas une suite de tests automatisés.
+La suite `tests/*.test.cjs` utilise `node:test` et le compilateur TypeScript existant, sans framework supplémentaire. La [recette navigateur du mode animé](../feature/003-mode-anime-musical/validation/README.md) utilise Playwright dans un environnement de vérification séparé. Le fichier `app/welcome/test.html` reste une expérimentation indépendante.
 
 ## Vérifications réalisées pour cet audit
 
@@ -70,7 +71,7 @@ Toutes les étapes partent de `node:20-alpine`, tandis que les workflows utilise
 
 | Workflow                                                         | Comportement déclaré                                                                                                                                        |
 | ---------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| [lint_and_build.yml](../../.github/workflows/lint_and_build.yml) | Workflow réutilisable : `npm ci`, Prettier, typecheck, build.                                                                                               |
+| [lint_and_build.yml](../../.github/workflows/lint_and_build.yml) | Workflow réutilisable : `npm ci`, Prettier, typecheck, tests Node et build.                                                                                 |
 | [release.yml](../../.github/workflows/release.yml)               | Sur push dans `main` : appelle les contrôles, peut incrémenter la version patch, créer/pousser un commit et un tag, puis lancer la construction de l’image. |
 | [build_image.yml](../../.github/workflows/build_image.yml)       | Workflow réutilisable : build et publication GHCR sous un tag lu dans `package.json`.                                                                       |
 
@@ -81,3 +82,9 @@ L’audit n’a lancé ni publication d’image, ni tag, ni push.
 ## Vérifications du style Joy Division
 
 Le développement du 31 octobre 2026 a été vérifié dans Chromium automatisé avec `song.mp3`, en complément de TypeScript et du build. La [recette de la feature 002](../feature/002-style-joy-division/validation/README.md) conserve les scénarios exécutés, les images portrait/paysage et la comparaison à la référence. Playwright et le navigateur ont été utilisés depuis des dossiers temporaires, sans ajout de dépendance au projet. Le [script de recette](../feature/002-style-joy-division/validation/verification.cjs) est conservé avec la feature pour répéter ces vérifications et régénérer les images ; il ne constitue pas une campagne multi-navigateurs.
+
+## Vérifications du mode animé musical
+
+La [feature 003](../feature/003-mode-anime-musical/README.md) ajoute des tests comportementaux reproductibles avec `npm test` et une [recette navigateur](../feature/003-mode-anime-musical/validation/README.md). Celle-ci détaille les exports GIF analysés, la lecture, la navigation, l’annulation, l’isolation des exports et les contrôles de disposition sur petit écran.
+
+Les contrôles de l’audit initial et sa recette manuelle ci-dessus sont historiques ; leurs observations sur l’absence de lecteur, la troncature de la durée et le facteur deux fréquentiel ont été remplacées par les comportements décrits dans les [spécifications actuelles](README.md). La validation de 003 ne constitue pas une campagne sur téléphones physiques ni une mesure de toutes les configurations de résolution et durée.

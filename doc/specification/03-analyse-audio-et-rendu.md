@@ -1,75 +1,75 @@
 # 03 — Analyse audio et rendu
 
+Ce document décrit le comportement après le développement de la [feature 003 — mode animé musical](../feature/003-mode-anime-musical/README.md), le **31 octobre 2026**. Les constats de l’audit initial du même jour, réalisé au commit `882e6188a57e60ac6cca575a505b2c44d9156fed`, sont conservés dans la [note historique](#évolution-depuis-laudit-initial) lorsqu’ils ont été corrigés.
+
 ## Du fichier aux séries spectrales
 
-La chaîne actuelle est implémentée dans [PosterGenerator](../../app/renderer/PosterGenerator.ts) et [AudioAnalyzer](../../app/renderer/AudioAnalyzer.ts).
+La chaîne est implémentée dans [PosterGenerator](../../app/renderer/PosterGenerator.ts) et [AudioAnalyzer](../../app/renderer/AudioAnalyzer.ts). `PosterGenerator.analyze(file, params)` expose l’analyse complète ; `generate(file, lineCount, params)` reste disponible pour sélectionner les premières lignes du poster fixe.
 
-Le générateur consulte d’abord un cache borné à quatre analyses par fichier, indexées par les paramètres audio. Sur un cache manquant :
+Le générateur consulte un cache borné à quatre analyses par fichier, indexées par FFT, lissage, décibels et intervalle entre les lignes. Sur un cache manquant :
 
 1. `File.arrayBuffer()` lit tout le fichier en mémoire.
-2. Un nouvel `AudioContext` décode le fichier via `decodeAudioData`.
-3. Un `OfflineAudioContext` mono est créé pour la longueur et la fréquence d’échantillonnage du buffer décodé.
+2. Un nouvel `AudioContext` décode le fichier via `decodeAudioData` et fournit sa durée exacte, fraction de seconde comprise.
+3. Un `OfflineAudioContext` mono est créé à la fréquence d’échantillonnage du buffer décodé, avec une longueur augmentée de 128 échantillons. Cette marge d’un quantum permet à la dernière suspension d’aboutir lorsque son arrondi tombe après la fin du son. La durée publique reste celle du morceau, sans cette marge.
 4. Le canal d’index `0` est copié dans un buffer mono. Les autres canaux ne sont pas mixés.
-5. Le graphe `BufferSource → AnalyserNode → destination hors ligne` est préparé. L’analyseur reçoit FFT, lissage et bornes de décibels.
-6. Des suspensions sont programmées aux temps `0, Δt, 2Δt…`, strictement inférieurs à la durée tronquée en secondes entières.
-7. À chaque suspension, `getByteFrequencyData()` relève un spectre, copié dans un tableau de nombres, puis le rendu hors ligne reprend.
-8. Le contexte audio est fermé en fin d’analyse, y compris en cas d’échec. Le générateur conserve les spectres en cache puis sélectionne `slice(0, lineCount)` pour chaque demande.
+5. Le graphe `BufferSource → AnalyserNode → destination hors ligne` reçoit FFT, lissage et bornes de décibels. Les bornes sont appliquées sans croiser transitoirement la plage par défaut de l’analyseur.
+6. Des suspensions sont programmées aux temps `0, Δt, 2Δt…`, strictement inférieurs à la durée exacte.
+7. À chaque suspension, `getByteFrequencyData()` relève un spectre, copié dans un tableau de nombres entre 0 et 255, puis le rendu hors ligne reprend. L’analyse attend le rendu et les suspensions avant de rendre ses données.
+8. Le contexte audio est fermé en fin d’analyse, y compris en cas d’échec. Les résultats en échec sont retirés du cache pour permettre une nouvelle tentative.
 
-L’analyse ne joue pas la musique sur la sortie sonore de l’utilisateur. Elle ne détecte ni tempo, ni tonalité, ni instruments, ni paroles. Les notes affichées sont des repères statiques, pas le résultat d’une transcription musicale.
+Le résultat contient `xAxis`, `frequencyData` et `duration`. Les apparences, formats et nombres de lignes réutilisent les spectres sans décoder de nouveau le fichier. La quantification des suspensions dépend du moteur Web Audio ; leur arrondi au quantum est défini par la [spécification Web Audio](https://www.w3.org/TR/webaudio/#dom-offlineaudiocontext-suspend).
 
-### Couverture temporelle réelle
+L’analyse hors ligne ne joue pas la musique sur la sortie sonore de l’utilisateur. La lecture audible utilise séparément un élément `<audio>` piloté par [useSongPlayback](../../app/welcome/useSongPlayback.ts). L’analyse ne détecte ni tempo, ni tonalité, ni instruments, ni paroles. Les notes affichées sont des repères statiques, pas le résultat d’une transcription musicale.
 
-Pour une durée décodée `D`, un intervalle `Δt` et une limite de lignes `L`, le nombre de suspensions programmées vaut approximativement :
+### Couverture temporelle et fréquences
+
+Pour une durée décodée `D > 0`, un intervalle positif `Δt` et une limite de lignes `L` :
 
 ```text
-N = ceil(floor(D) / Δt)
+N = ceil(D / Δt)
 M = min(L, N)
-Temps demandés pour les lignes conservées : 0, Δt, …, (M - 1) × Δt
+Temps demandés : 0, Δt, …, (N - 1) × Δt
+Fréquence du bin i = i × sampleRate / fftSize
+Nombre de bins = fftSize / 2
 ```
 
-Cette formule décrit la programmation du code ; l’instant effectif des suspensions dépend du moteur Web Audio. Avec les valeurs initiales (`L = 20`, `Δt = 0,5 s`), le poster utilise les tranches demandées de 0 à 9,5 secondes, même pour un morceau de plusieurs minutes. L’analyse complète reste pourtant effectuée.
+Le poster fixe conserve les `M` premières tranches. Avec les valeurs initiales de Spectrum (`L = 20`, `Δt = 0,5 s`), il représente les temps demandés de 0 à 9,5 secondes au maximum. L’animation utilise toute l’analyse ; elle n’est pas limitée aux premières tranches.
 
-La fraction finale de seconde est exclue de la programmation. Un fichier de moins d’une seconde ne produit aucune ligne ; le générateur peut tout de même être considéré comme terminé par l’interface.
+Les morceaux de moins d’une seconde ont désormais au moins une tranche. L’intervalle doit être fini et strictement positif. À 44 100 Hz avec une FFT de 2 048 points, le bin 100 correspond à environ 2 153 Hz ; les filtres et les repères utilisent cette fréquence.
 
-### Correspondance fréquentielle actuelle
+## Du spectre au dessin
 
-Le code produit actuellement :
+[PosterRenderer.drawPoster](../../app/renderer/PosterRenderer.ts) est l’opération commune à l’aperçu, au PNG et aux images du GIF. Elle accepte un contexte Canvas 2D ou OffscreenCanvas 2D, remplit le fond et filtre les bins entre `minFrequency` et `maxFrequency` incluses. Les valeurs non finies sont remplacées par zéro.
 
-```text
-B = frequencyBinCount = fftSize / 2
-fréquence déclarée du bin i = i × sampleRate / B
-```
+[PosterComponent](../../app/renderer/PosterComponent.tsx) appelle cette opération dans un effet de mise en page React. Les changements de réglages sont différés de 250 ms ; pendant un nouveau calcul, l’ancien visuel reste affiché et la musique continue. Le nouveau résultat utilise la position alors courante, sans relancer le morceau.
 
-La correspondance d’une FFT est `i × sampleRate / fftSize`. Les fréquences déclarées sont donc multipliées par deux. Exemple : pour un buffer à 44 100 Hz et une FFT de 2 048 points, le bin 100 représente environ 2 153 Hz, mais est étiqueté environ 4 307 Hz par le code.
+### Spectrum
 
-Conséquence : le filtre initial affiché « 1 500–4 500 Hz » sélectionne en réalité des bins correspondant approximativement à 750–2 250 Hz. Les noms de notes sur l’axe sont décalés eux aussi. Ce défaut est déduit de la formule du code ; aucune mesure sur un signal étalon n’a été exécutée pendant cet audit.
+Le style utilise une échelle fréquentielle linéaire et des courbes de Bézier. La marge vaut 50 pixels aux dimensions habituelles et diminue pour les petits canevas. Les notes naturelles de `NOTES` apparaissent sur l’axe horizontal ; les notes diésées ou bémolisées sont ignorées.
 
-## Des séries au dessin
+En fixe, les rangées sont espacées selon leur index, avec une normalisation verticale calculée sur `index + amplitude / 255`. Les étiquettes affichent `index × durationBetweenLines` avec une décimale. Les reliefs ont une hauteur de référence de 50 pixels. Une plage contenant moins de deux bins ou des séries vides laisse le fond ; une amplitude uniforme ne produit pas de division par zéro.
 
-Le [composant de rendu](../../app/renderer/PosterComponent.tsx) dessine dans un `<canvas>` depuis un effet de mise en page React. Les caractéristiques ci-dessous concernent le style Spectrum historique.
+En animé, les rangées conservent des hauteurs fixes et le relief maximal ne change pas avec les amplitudes de l’image courante. Les repères sont des décalages fixes par rapport à la lecture : `0 s` en bas, puis `−Δt`, `−2Δt`, etc. Les notes restent présentes. Ces repères s’appliquent aussi au GIF.
 
-- Il remplit le fond, puis filtre l’axe et les amplitudes entre `minFrequency` et `maxFrequency` incluses.
-- Il utilise une échelle fréquentielle linéaire et une marge fixe de 50 pixels.
-- Les noms de notes naturelles de la table `NOTES` sont placés sur l’axe horizontal ; les notes diésées/bémolisées sont ignorées.
-- Les lignes sont espacées en fonction de leur index, avec une normalisation verticale calculée sur `index + amplitude / 255`.
-- Chaque courbe est interpolée avec des segments de Bézier. Son relief utilise une hauteur fixe de 50 pixels ; le fond masque une partie des courbes précédentes pour créer un effet de strates.
-- Les étiquettes verticales affichent `index × durationBetweenLines` avec une décimale.
+Chaque rangée masque les courbes précédentes sous son contour, puis utilise les couleurs Stroke et Accent sur tout son tracé. Un chemin et un dégradé sont construits par rangée, plutôt qu’un dégradé par bin. Les marges, la police et les reliefs de Spectrum ne sont pas proportionnels au DPI ; les petits canevas adaptent leurs marges et leur police.
 
-La palette configurée ne contrôle pas toute la courbe : après le premier segment de chaque ligne, les couleurs suivantes sont recalculées en HSL avec `index × 4`. Les couleurs choisies et les aperçus des presets peuvent donc différer du rendu réel.
+### Joy Division
 
-Les marges, la police de 15 pixels et les reliefs de 50 pixels ne dépendent pas du DPI. Augmenter la taille du canevas ne préserve donc pas automatiquement les proportions graphiques du poster.
+[JoyDivisionRenderer](../../app/renderer/JoyDivisionRenderer.ts) utilise les mêmes spectres filtrés. Valeurs initiales : 80 lignes, FFT 4 096, traits blancs de largeur de référence 3, fond noir ; les autres paramètres audio et la plage fréquentielle restent ceux du socle initial.
 
-Le rendu n’a pas de branche dédiée aux séries vides, à une plage sans bin, à une seule fréquence ou à une amplitude uniforme avec une seule ligne. Certaines de ces entrées peuvent conduire à des divisions par zéro ou à des coordonnées non finies. Les cas exacts restent à vérifier dans un navigateur.
+Le dessin applique une échelle d’amplitude commune, une puissance 2,2 pour accentuer les contrastes et une enveloppe centrée `exp(-0,5 × ((u - 0,5) / 0,16)²) × sin(πu)`, où `u` parcourt la largeur de 0 à 1. Aucune normalisation par ligne ni aucun bruit aléatoire n’est ajouté. Le silence produit des lignes plates. Les points sont reliés par segments avec jointures arrondies.
 
-## Style Joy Division
+Les marges horizontales valent 5,5 % de la largeur et les marges verticales 6,5 % de la hauteur. La hauteur maximale des reliefs est le minimum de 24 % de la largeur utile et de 18 % de la hauteur. En fixe, les contours réels sont ajustés à la hauteur utile avec une échelle verticale commune et le maximum des spectres affichés. En animé, le maximum provient du morceau entier dans la plage de fréquences choisie ; la réserve verticale et les rangées sont fixes pour éviter les changements d’échelle entre images. L’épaisseur est proportionnelle au plus petit côté, avec 840 px comme référence.
 
-[JoyDivisionRenderer](../../app/renderer/JoyDivisionRenderer.ts) utilise les mêmes spectres filtrés, avec une ligne par tranche temporelle. Valeurs initiales : 80 lignes, FFT 4 096, traits blancs de largeur de référence 3, fond noir ; les autres paramètres audio et la plage fréquentielle restent ceux du socle initial.
+Chaque ligne remplit la zone située sous son contour avec la couleur du fond avant de tracer celui-ci, de haut en bas. Les reliefs suivants occultent ainsi les lignes précédentes. Le trait utilise Stroke et Accent via un dégradé vertical. Aucun axe ni texte n’est tracé. Les plages vides et les amplitudes nulles ne produisent pas de division par zéro.
 
-Le dessin applique aux amplitudes une échelle commune (maximum des spectres affichés), une puissance 2,2 pour accentuer les contrastes et une enveloppe centrée `exp(-0,5 × ((u - 0,5) / 0,16)²) × sin(πu)`, où `u` parcourt la largeur de 0 à 1. Aucune normalisation par ligne ni aucun bruit aléatoire n’est ajouté. Le silence produit des lignes plates. Les points sont reliés par segments avec jointures arrondies.
+## Animation et raccord de boucle
 
-Les marges horizontales valent 5,5 % de la largeur ; les marges verticales 6,5 % de la hauteur. La hauteur maximale initiale des reliefs est le minimum de 24 % de la largeur utile et de 18 % de la hauteur. Les contours réels sont ensuite ajustés à la hauteur utile avec une échelle verticale commune. Le bloc s’adapte au portrait et au paysage. L’épaisseur est proportionnelle au plus petit côté, avec 840 px comme référence.
+[animationFrame](../../app/renderer/animation.ts) évalue les spectres à partir du temps de lecture, pris modulo la durée décodée. La rangée du bas correspond au temps courant, celles du dessus aux temps `t − Δt`, `t − 2Δt`, etc. L’empilement est donc complet dès le début, avec les données de fin au-dessus de celles du début. Un morceau plus court que l’empilement est répété pour remplir ses rangées.
 
-Chaque ligne remplit la zone située sous son contour avec la couleur du fond avant de tracer celui-ci, de haut en bas. Les reliefs suivants occultent ainsi les lignes précédentes. Le trait utilise réellement les couleurs Stroke et Accent via un dégradé vertical. Aucun axe ni texte n’est tracé. Les plages vides et les amplitudes nulles ne produisent pas de division par zéro.
+Entre deux prélèvements, les amplitudes sont interpolées linéairement ; chaque rangée rejoint progressivement la forme de celle située en dessous. L’intervalle `durationBetweenLines` règle cette transformation sans modifier la vitesse de la musique. La dernière tranche rejoint la première pendant la fraction de durée restante, même lorsque `D` n’est pas un multiple de `Δt`. L’état à `t = D` est celui de `t = 0`, sans rallonger le morceau.
+
+L’aperçu vise 20 images/s depuis l’horloge de l’élément audio ; la navigation évalue directement l’état correspondant au passage demandé. Le lecteur reprend automatiquement au début et l’animation suit cette reprise. La cadence effective et la fluidité dépendent du navigateur et de l’appareil ; les contrôles exécutés et leurs limites sont consignés dans la [documentation de vérification](06-developpement-et-verification.md).
 
 ## Dimensions du canevas
 
@@ -83,16 +83,29 @@ Les calculs sont répartis entre [Welcome](../../app/welcome/welcome.tsx), [Form
 
 Les formats standards utilisent **4 pixels par millimètre**, soit une densité calculée de 101,6 pixels par pouce. Le DPI initial de 300 ne s’applique qu’au mode personnalisé. À titre de comparaison, 210 × 297 mm à 300 DPI donne 2 480 × 3 508 pixels.
 
-Le mode paysage échange largeur et hauteur de base, y compris pour les dimensions personnalisées. Il ne trie pas les valeurs pour garantir que la largeur soit supérieure à la hauteur.
+Le mode paysage échange largeur et hauteur de base, y compris pour les dimensions personnalisées. Il ne trie pas les valeurs pour garantir que la largeur soit supérieure à la hauteur. La saisie en cm est convertie en mm ; la saisie en px est convertie en mm à l’aide du DPI courant. Changer ensuite le DPI conserve les millimètres internes et modifie le nombre de pixels.
 
-La saisie en cm est convertie en mm ; la saisie en px est convertie en mm à l’aide du DPI courant. Changer ensuite le DPI conserve les millimètres internes et modifie le nombre de pixels. Les dimensions et le DPI sont bornés au calcul ; les champs sont aussi normalisés à la perte du focus.
+Les dimensions et le DPI sont bornés au calcul ; les champs sont aussi normalisés à la perte du focus. Avant d’allouer le canevas, [validateGifDimensions](../../app/animation/gifTimeline.ts) impose des dimensions entières positives, **4 096 px au maximum par côté et 16 000 000 pixels au total**. Cette protection concerne l’aperçu et les exports PNG/GIF. Un format trop grand affiche une erreur et doit être réduit ; il n’est pas redimensionné silencieusement.
 
-## Export
+## Exports PNG et GIF
 
-`handleSavePoster` récupère le canevas `poster-preview-canvas`, appelle `toDataURL("image/png")` et déclenche le clic d’un lien de téléchargement.
+Le menu du bouton de téléchargement propose PNG et GIF dès que l’analyse et le format sont prêts, même sans écoute préalable. Les fichiers contiennent uniquement le dessin et reprennent les dimensions du poster :
 
 ```text
 <nom-du-fichier-sans-extension>-<largeurMm>x<hauteurMm>mm.png
+<nom-du-fichier-sans-extension>-<largeurMm>x<hauteurMm>mm.gif
 ```
 
-Le PNG contient uniquement le dessin, sans les panneaux ni la barre d’outils. Il utilise exactement les dimensions du canevas de prévisualisation. Aucun rendu d’export distinct, aucune insertion explicite de métadonnées DPI, aucun PDF ni SVG ne sont implémentés. Les millimètres inscrits dans le nom ne suffisent pas à imposer une taille d’impression au logiciel qui ouvrira le fichier.
+Le PNG est dessiné séparément avec les premières tranches du poster fixe puis converti en `Blob`. Il reste donc fixe même si le téléchargement est demandé pendant l’écoute. Il n’insère pas explicitement de métadonnées DPI. Aucun PDF ni SVG n’est implémenté ; les millimètres inscrits dans le nom ne suffisent pas à imposer une taille d’impression au logiciel qui ouvrira le fichier.
+
+Le GIF est muet et configuré pour une répétition infinie. [GifPreparation](../../app/animation/GifPreparation.ts) conserve une configuration de l’analyse, du style, des réglages et des dimensions. Le [worker GIF](../../app/animation/gif.worker.ts) dessine successivement les images dans un OffscreenCanvas et les encode avec `gifenc` ; les blocs encodés sont conservés temporairement dans IndexedDB, indexés par numéro d’image. Les images brutes ne sont pas conservées ensemble.
+
+Pendant l’écoute, les positions visitées alimentent cette préparation. Demander le GIF complète les images manquantes et assemble les blocs dans l’ordre chronologique du morceau entier, à **20 images/s**. Les délais GIF sont de cinq centièmes par image ; la dernière image reçoit le délai restant après arrondi de la durée au centième le plus proche, avec une durée minimale d’un centième. L’export ne déplace pas la lecture et ne change pas son état.
+
+La préparation est remplacée après un changement de réglages ; un export déjà lancé conserve sa configuration et son morceau jusqu’à son terme, même si l’éditeur change de fichier. La progression et l’annulation concernent cet export. L’encodage s’effectue dans un worker et laisse l’éditeur utilisable. Les données temporaires sont supprimées lorsque leur préparation est libérée ; la fermeture de la page abandonne le travail courant.
+
+Le navigateur doit prendre en charge Web Workers, OffscreenCanvas 2D et IndexedDB. Une absence d’API, une erreur de génération ou un quota de stockage insuffisant donne un message de reprise. Le fichier final est assemblé en `Blob` avant téléchargement : la préparation successive évite l’accumulation des images RGBA, mais ne garantit pas une consommation mémoire ou un espace disque indépendants de la taille du GIF. Les limites de taille, de durée et de performance doivent être appréciées avec la [recette de la feature 003](../feature/003-mode-anime-musical/README.md).
+
+## Évolution depuis l’audit initial
+
+L’audit du **31 octobre 2026**, au commit `882e6188a57e60ac6cca575a505b2c44d9156fed`, avait relevé des prélèvements limités à `floor(D)`, l’absence de lignes sous une seconde, des fréquences multipliées par deux, une palette Spectrum partiellement remplacée par des couleurs HSL et un export PNG prélevé directement dans le canevas affiché. Ces descriptions sont historiques : les corrections de la feature 003 sont celles décrites dans les sections courantes ci-dessus. Les autres limites du produit sont regroupées dans [05 — Limites actuelles](05-limites-actuelles.md).

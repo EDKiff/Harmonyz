@@ -94,6 +94,7 @@ const temporary = mkdtempSync(
         );
         const downloadPromise = page.waitForEvent("download");
         await page.getByRole("button", { name: "Save", exact: true }).click();
+        await page.getByRole("button", { name: "Download PNG", exact: true }).click();
         const download = await downloadPromise;
         await download.saveAs(temporary + "/download.png");
         assert.equal(
