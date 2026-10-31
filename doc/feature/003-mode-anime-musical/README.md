@@ -70,7 +70,7 @@ L’application affiche un poster fixe par défaut.
 
 **Export non bloquant validé : progression et bouton Annuler visibles.** Pendant la génération du GIF, l’éditeur reste utilisable pour écouter le morceau, naviguer et personnaliser le visuel. Ces modifications n’altèrent pas les réglages du GIF en cours, qui reste associé à ceux présents au lancement de son export. L’utilisateur peut suivre la progression et annuler la génération ; l’annulation concerne l’export et conserve les réglages ainsi que l’état du lecteur.
 
-La gestion des images brutes et du fichier encodé fait partie des [travaux techniques restants](#travaux-techniques-restants). La préparation progressive et la disponibilité du fichier complet doivent être distinguées.
+La gestion des images brutes et du fichier encodé fait partie des [choix livrés et limites restantes](#choix-livrés-et-limites-restantes). La préparation progressive et la disponibilité du fichier complet doivent être distinguées.
 
 ### Mouvement et raccord de boucle
 
@@ -119,6 +119,8 @@ Les termes clarifiés sont regroupés dans le [glossaire de la feature](glossair
 - Les réglages présents au lancement de l’export s’appliquent au GIF entier. Après une écoute en blanc puis un changement vers le rouge avant l’export, le GIF est entièrement rouge ; les préparations obsolètes sont régénérées progressivement.
 - Pendant la génération, l’éditeur reste utilisable et une progression ainsi qu’un bouton Annuler sont visibles. Modifier les réglages à ce moment ne change pas le GIF en cours d’export ; annuler l’export conserve les réglages et l’état du lecteur.
 - Au raccord entre la fin et le début du GIF, les courbes se transforment progressivement pour conserver la continuité visuelle de l’animation.
+
+Les comparaisons visuelles Play/Stop, ajoutées après le signalement des décalages sur les deux styles, sont conservées dans la [recette](validation/README.md#comparaison-visuelle-avant-et-après-stop).
 
 Ces critères restent la référence d’acceptation. La [recette](validation/README.md) distingue les contrôles exécutés, leurs résultats et les vérifications qui restent à effectuer sur des appareils physiques.
 

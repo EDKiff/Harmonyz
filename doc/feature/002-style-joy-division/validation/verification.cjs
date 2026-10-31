@@ -141,6 +141,8 @@ const temporary = mkdtempSync(
             const ctx = {
                 save() {},
                 restore() {},
+                rect() {},
+                clip() {},
                 beginPath() {
                     contour = [];
                 },

@@ -27,6 +27,8 @@ function canvasCommands() {
     const ctx = {
         save() {},
         restore() {},
+        rect: coordinate,
+        clip() {},
         closePath() {},
         fill() {},
         fillRect: coordinate,
@@ -41,7 +43,10 @@ function canvasCommands() {
             coordinate(x, y);
             contour.push([x, y]);
         },
-        bezierCurveTo: coordinate,
+        bezierCurveTo(...points) {
+            coordinate(...points);
+            contour.push(points);
+        },
         fillText(text, x, y) {
             coordinate(x, y);
             labels.push([text, x, y]);
@@ -107,4 +112,60 @@ test("both renderers honor the selected colors on every curve", () => {
         assert.ok(commands.colors.length > 0);
         assert.ok(commands.colors.every((color) => color === "#ff0000"));
     }
+});
+
+for (const style of ["spectrum", "joy-division"]) {
+    test(`${style} keeps curve placement and scale when switching between playback and a fixed poster`, () => {
+        const fixed = canvasCommands();
+        const playing = canvasCommands();
+        const frame = drawing(128, style);
+        drawPoster(playing.ctx, frame);
+        drawPoster(fixed.ctx, {
+            ...frame,
+            animated: false,
+            yAxisData: frame.yAxisData.map((row, timestamp) => ({ ...row, timestamp })),
+        });
+        assert.deepEqual(
+            fixed.strokes,
+            playing.strokes,
+            "changing mode must not move or rescale the same curves",
+        );
+    });
+
+    test(`${style} keeps the configured row positions for a short fixed poster`, () => {
+        const fixed = canvasCommands();
+        const playing = canvasCommands();
+        const frame = { ...drawing(128, style), parameters: { ...parameters, lineCount: 20 } };
+        drawPoster(playing.ctx, {
+            ...frame,
+            yAxisData: Array.from({ length: 20 }, () => frame.yAxisData[0]),
+        });
+        drawPoster(fixed.ctx, {
+            ...frame,
+            animated: false,
+            yAxisData: frame.yAxisData.slice(0, 2).map((row, timestamp) => ({ ...row, timestamp })),
+        });
+        const axisPaths = style === "spectrum" ? 1 : 0;
+        assert.deepEqual(
+            fixed.strokes.slice(axisPaths).map((points) => points[0]),
+            playing.strokes.slice(axisPaths, axisPaths + 2).map((points) => points[0]),
+            "having fewer available spectra must not stretch their row positions",
+        );
+    });
+}
+
+test("Spectrum note labels align with the frequency samples across the entire plot", () => {
+    const commands = canvasCommands();
+    drawPoster(commands.ctx, {
+        ...drawing(128),
+        displayableNotes: [
+            { alphabetic: "C", octave: 6, frequency: 1000 },
+            { alphabetic: "D", octave: 6, frequency: 2000 },
+            { alphabetic: "E", octave: 6, frequency: 3000 },
+        ],
+    });
+    const sampleXs = commands.strokes[1].slice(1).map((point) => point.at(-2));
+    const noteXs = commands.labels.slice(0, 3).map(([, x]) => x);
+    assert.deepEqual(noteXs, [50, 420, 790], "frequency labels span the plot without overshooting");
+    assert.deepEqual(sampleXs, noteXs, "each note sits under its frequency sample");
 });

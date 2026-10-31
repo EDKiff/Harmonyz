@@ -85,6 +85,6 @@ Le développement du 31 octobre 2026 a été vérifié dans Chromium automatisé
 
 ## Vérifications du mode animé musical
 
-La [feature 003](../feature/003-mode-anime-musical/README.md) ajoute des tests comportementaux reproductibles avec `npm test` et une [recette navigateur](../feature/003-mode-anime-musical/validation/README.md). Celle-ci détaille les exports GIF analysés, la lecture, la navigation, l’annulation, l’isolation des exports et les contrôles de disposition sur petit écran.
+La [feature 003](../feature/003-mode-anime-musical/README.md) ajoute des tests comportementaux reproductibles avec `npm test` et une [recette navigateur](../feature/003-mode-anime-musical/validation/README.md). Celle-ci détaille les exports GIF analysés, la lecture, la navigation, l’annulation, l’isolation des exports et les contrôles de disposition sur petit écran. Sa [comparaison Play/Stop](../feature/003-mode-anime-musical/validation/README.md#comparaison-visuelle-avant-et-après-stop) conserve les captures de chaque style juste avant et après l’arrêt, le symptôme reproduit et les mesures après correction.
 
 Les contrôles de l’audit initial et sa recette manuelle ci-dessus sont historiques ; leurs observations sur l’absence de lecteur, la troncature de la durée et le facteur deux fréquentiel ont été remplacées par les comportements décrits dans les [spécifications actuelles](README.md). La validation de 003 ne constitue pas une campagne sur téléphones physiques ni une mesure de toutes les configurations de résolution et durée.

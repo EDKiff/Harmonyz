@@ -38,7 +38,7 @@ Le script inspecte les dimensions, les délais de **toutes les images**, les pal
 
 ## Contrôles du dépôt
 
-La suite complète `npm test` a réussi avec **12 tests**. `npm run typecheck`, `npm run lint` et `npm run build` ont également réussi ; le build client inclut le worker GIF et le build serveur conserve le rendu SSR. Les liens locaux du README racine et de `doc/` ont été contrôlés sans cible manquante. La CI exécute désormais la suite Node avant le build.
+Lors de la première livraison, la suite complète `npm test` a réussi avec **12 tests**. Le contrôle complémentaire Play/Stop ci-dessous ajoute les régressions de géométrie. `npm run typecheck`, `npm run lint` et `npm run build` ont également réussi ; le build client inclut le worker GIF et le build serveur conserve le rendu SSR. Les liens locaux du README racine et de `doc/` ont été contrôlés sans cible manquante. La CI exécute désormais la suite Node avant le build.
 
 La revue du changement depuis `ed0cdf1ecb34744c33d09748937566dae8fdd621` a couvert séparément les règles du projet et les exigences de la feature. Un écart mineur de séparation documentaire a été corrigé ; aucun écart fonctionnel n’a été identifié. L’extraction future de la gestion des exports hors de Welcome reste une suggestion de maintenance.
 
@@ -60,5 +60,32 @@ Ces mesures comprennent l'orchestration locale du téléchargement et l'inspecti
 Après le build client et serveur, la même recette complète a réussi contre le serveur de production local (`PORT=3182 npm start`). La page rendue par le serveur s'hydrate correctement et le worker GIF empaqueté fonctionne : les quatre GIF présentent les mêmes dimensions, nombres d'images, durées et tailles que pendant la recette de développement. Les scénarios de lecture, d'export isolé, d'annulation, de téléphone simulé et d'import du MP3 réel sont passés sans événement `pageerror`.
 
 La recette de production a été enrichie du contrôle PNG pendant la lecture puis exécutée à nouveau avec succès. Pendant ces contrôles distincts, le premier GIF a été produit et inspecté en 382–433 ms, et le GIF A4 court en 438–467 ms. Le comptage des redessins sur des fenêtres de 1,5 seconde a donné 19,6–20,5 images/s ; cette courte observation inclut les redessins d'interface et ne constitue pas une mesure de cadence soutenue. Les captures et GIF sont conservables de la même façon que pour le serveur de développement.
+
+## Comparaison visuelle avant et après Stop
+
+Après le signalement de décalages dans les deux styles, le [script de comparaison](stop-comparison.cjs) a été exécuté sur `song.mp3`, en A4 portrait (840 × 1 188 px), dans Chromium à 1 440 × 1 000 px. Il place la lecture vers 12 secondes, capture le canevas puis déclenche Stop dans la même tâche navigateur ; il prend ensuite une seconde capture une fois le poster fixe redessiné. Les commandes Canvas observées permettent de comparer chaque hauteur de rangée, tandis que les dimensions affichées et la position audio sont vérifiées séparément.
+
+```bash
+HARMONYZ_URL=http://127.0.0.1:3181 PLAYWRIGHT_MODULE=/chemin/vers/playwright HARMONYZ_CAPTURE_DIR=/tmp/harmonyz-stop node doc/feature/003-mode-anime-musical/validation/stop-comparison.cjs
+```
+
+Sans `HARMONYZ_CAPTURE_DIR`, le script crée un dossier temporaire et en affiche le chemin. Il conserve les deux captures de canevas et d’interface par style, un panneau comparatif et les mesures JSON. Sur un montage WSL où Vite ne reçoit pas les changements de fichiers, redémarrer le serveur avant la recette pour vérifier le code effectivement servi.
+
+Le symptôme a été reproduit deux fois avant correction, avec le même verdict rouge. Les preuves initiales correspondent au commit `436b9fa` :
+
+| Style        | Décalage maximal des rangées avant correction | Après correction | Comparaison initiale                                        | Comparaison corrigée                                       |
+| ------------ | --------------------------------------------- | ---------------- | ----------------------------------------------------------- | ---------------------------------------------------------- |
+| Spectrum     | 44,68 px                                      | 0 px             | [Avant correction](stop/before/spectrum-comparison.png)     | [Après correction](stop/after/spectrum-comparison.png)     |
+| Joy Division | 152,88 px                                     | 0 px             | [Avant correction](stop/before/joy-division-comparison.png) | [Après correction](stop/after/joy-division-comparison.png) |
+
+Les [mesures initiales](stop/before/results.json) et les [mesures corrigées](stop/after/results.json) conservent les positions exactes. Dans les deux styles, le canevas reste de la même taille et à la même position ; Stop conserve également la position audio et ne produit aucune erreur navigateur. Les notes Spectrum gardent leurs coordonnées. Le correctif aligne aussi leurs positions sur les bins fréquentiels, vérifié avec des fréquences connues dans le test du renderer.
+
+La comparaison corrigée montre une occupation commune de la zone de dessin : l’empilement Joy Division n’est plus tassé sous une réserve de pic entière, et les rangées Spectrum ne remontent plus à l’arrêt. Les courbes peuvent changer de forme puisque Stop retrouve les premières tranches du poster fixe ; ce retour est conservé. Les pics qui quittent le haut de Joy Division sont découpés à la limite de sa zone utile sans déplacer l’empilement.
+
+La boucle minimale `node --test tests/poster-renderer.test.cjs` a d’abord montré les différences entre deux dessins des mêmes courbes, puis les a éliminées : **8 tests ciblés réussissent**, dont cinq nouvelles régressions sur les positions et l’échelle entre modes, les fichiers courts et l’alignement des notes. Le faux contexte Canvas utilisé par ces tests observe les coordonnées mais ne simule pas les pixels du découpage ; les captures réelles complètent donc ce contrôle.
+
+La campagne comparative a également réussi sur le build de production (`PORT=3182 npm start`). Pour chaque style, le PNG téléchargé après Stop est identique octet par octet au canevas fixe capturé ; le résultat `pngMatchesFixedPreview` figure dans les mesures corrigées. La suite complète passe désormais avec **17 tests**, ainsi que TypeScript, Prettier et le build client/serveur. Les revues Standards et Spec du correctif n’ont identifié aucun écart.
+
+La recette générale a été rejouée sur ce build de production : lecture, reprise, navigation, boucle, PNG pendant l’écoute, export GIF avant écoute, personnalisation uniforme, changement de morceau pendant export, annulation et téléphone simulé passent sans erreur navigateur. Après la modification du dessin, les tailles de GIF ont changé : 340 354 octets pour Spectrum de 2,127 s, 93 474 octets pour Joy Division A4 de 0,501 s, 1 339 488 octets pour l’export isolé de 8,127 s et 96 807 octets pour l’export après écoute partielle. Les dimensions, nombres d’images, durées et boucles restent conformes aux contrôles précédents.
 
 [Retour à la feature 003](../README.md).

@@ -75,27 +75,17 @@ export function drawPoster(ctx: PosterCanvasContext, drawing: PosterDrawing) {
                 width,
                 height,
                 parameters,
-                animated ? { amplitudePeak: amplitudePeak ?? 255, fixedRows: true } : undefined,
+                amplitudePeak,
             );
             return;
         }
         if (frequencies.length < 2 || rows.length === 0) return;
         const padding = Math.min(50, width * 0.15, height * 0.15);
-        const barWidth = (width - 2 * padding) / frequencies.length;
-        let minY = Infinity;
-        let maxY = -Infinity;
-        for (const { timestamp, frequencyData } of rows) {
-            for (const value of frequencyData) {
-                const yValue = timestamp + value / 255;
-                minY = Math.min(minY, yValue);
-                maxY = Math.max(maxY, yValue);
-            }
-        }
-        const mapY = (value: number) => {
-            const span = maxY - minY;
-            const normalized = span > 0 ? (value - minY) / span : 0.5;
-            return normalized * (height - 2 * padding) + padding + barWidth;
-        };
+        const pointSpacing = (width - 2 * padding) / (frequencies.length - 1);
+        const rowCount = Math.max(1, parameters.lineCount, rows.length);
+        const lineHeight = Math.min(50, height * 0.12);
+        const rowSpacing =
+            Math.max(0, height - 2 * padding - lineHeight) / Math.max(1, rowCount - 1);
         ctx.strokeStyle = parameters.axisColor;
         ctx.fillStyle = parameters.axisColor;
         ctx.font = `${Math.min(15, width / 18)}px ${parameters.axisFont}`;
@@ -111,7 +101,7 @@ export function drawPoster(ctx: PosterCanvasContext, drawing: PosterDrawing) {
             if (x < padding || x > width - padding) continue;
             ctx.fillText(
                 note.alphabetic + note.octave,
-                x + barWidth / 2,
+                x,
                 height - padding + Math.min(25, padding / 2),
             );
         }
@@ -123,27 +113,14 @@ export function drawPoster(ctx: PosterCanvasContext, drawing: PosterDrawing) {
         ctx.lineTo(padding, height - padding);
         ctx.stroke();
         rows.forEach(({ timestamp, frequencyData }, index) => {
-            // Animated rows have stable baselines, independent of their current amplitudes.
-            const y = animated
-                ? padding +
-                  Math.min(50, height * 0.12) +
-                  (index / Math.max(1, rows.length - 1)) *
-                      Math.max(0, height - 2 * padding - Math.min(50, height * 0.12))
-                : mapY(timestamp);
+            // Mode and current amplitudes change the curves, never their row positions.
+            const y = padding + lineHeight + index * rowSpacing;
             ctx.fillStyle = parameters.axisColor;
             const label = animated
                 ? `${timestamp === 0 ? "0" : "−" + Number(Math.abs(timestamp).toFixed(2))} s`
                 : (timestamp * yAxisDataStepInSeconds).toFixed(1);
             ctx.fillText(label, padding / 2, y);
-            drawLine(
-                ctx,
-                frequencyData,
-                y,
-                padding,
-                barWidth,
-                parameters,
-                animated ? Math.min(50, height * 0.12) : 50,
-            );
+            drawLine(ctx, frequencyData, y, padding, pointSpacing, parameters, lineHeight);
         });
     } finally {
         ctx.restore();
@@ -164,9 +141,10 @@ function drawLine(
     ctx.lineWidth = parameters.dataLinesWidth;
 
     const trace = () => {
-        let previousY = baselineY;
+        let previousY = baselineY - (data[0] / 255) * lineHeight;
         ctx.moveTo(baselineX, baselineY);
-        data.forEach((amplitude, index) => {
+        ctx.lineTo(baselineX, previousY);
+        data.slice(1).forEach((amplitude, index) => {
             const endX = baselineX + (index + 1) * pointSpacing;
             const endY = baselineY - (amplitude / 255) * lineHeight;
             const controlX = baselineX + (index + 0.5) * pointSpacing;
@@ -186,7 +164,10 @@ function drawLine(
     ctx.fillStyle = parameters.backgroundColor;
     ctx.beginPath();
     trace();
-    ctx.lineTo(baselineX + data.length * pointSpacing, baselineY + parameters.dataLinesWidth / 2);
+    ctx.lineTo(
+        baselineX + (data.length - 1) * pointSpacing,
+        baselineY + parameters.dataLinesWidth / 2,
+    );
     ctx.lineTo(baselineX, baselineY + parameters.dataLinesWidth / 2);
     ctx.closePath();
     ctx.fill();

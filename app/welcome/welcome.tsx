@@ -252,6 +252,7 @@ export function Welcome() {
                 width: canvas.width,
                 height: canvas.height,
                 yAxisDataStepInSeconds: rendered.parameters.durationBetweenLines,
+                amplitudePeak,
             });
             const name = filename();
             const blob = await new Promise<Blob | null>((resolve) =>
