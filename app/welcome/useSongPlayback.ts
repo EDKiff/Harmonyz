@@ -37,6 +37,7 @@ export function useSongPlayback(file: File | null) {
         let frame = 0;
         let nextUpdate = 0;
         const update = (now: number) => {
+            if (!audioRef.current || audioRef.current.paused) return;
             if (now >= nextUpdate) {
                 setPosition(audioRef.current?.currentTime ?? 0);
                 nextUpdate += 50 * Math.max(1, Math.floor((now - nextUpdate) / 50) + 1);
@@ -52,7 +53,6 @@ export function useSongPlayback(file: File | null) {
         if (!audio || !file) return;
         if (!audio.paused) {
             audio.pause();
-            setPosition(audio.currentTime);
         } else {
             try {
                 setError(null);

@@ -100,8 +100,11 @@ fs.mkdirSync(output, { recursive: true });
                     },
                 };
                 [...document.querySelectorAll("button")]
-                    .find((button) => button.textContent.trim() === "Stop")
+                    .find((button) => /^(Stop|Pause)$/.test(button.textContent.trim()))
                     .click();
+                [...document.querySelectorAll("button")]
+                    .find((button) => button.textContent.trim() === "Still poster")
+                    ?.click();
                 return result;
             });
             await page.getByRole("button", { name: "Play", exact: true }).waitFor();
@@ -162,8 +165,8 @@ fs.mkdirSync(output, { recursive: true });
                     context.fillRect(0, 0, canvas.width, canvas.height);
                     context.fillStyle = "#0f172a";
                     context.font = "20px sans-serif";
-                    context.fillText(`${style} · juste avant Stop`, 20, 32);
-                    context.fillText(`${style} · après Stop`, 550, 32);
+                    context.fillText(`${style} · pendant la lecture`, 20, 32);
+                    context.fillText(`${style} · après retour au poster`, 550, 32);
                     context.drawImage(first, 20, 50, 490, 693);
                     context.drawImage(second, 550, 50, 490, 693);
                     return canvas.toDataURL().split(",")[1];
@@ -220,10 +223,10 @@ fs.mkdirSync(output, { recursive: true });
                 pngMatchesFixedPreview,
                 "the exported PNG matches the fixed preview exactly for this style",
             );
-            assert.equal(after.paused, true, "Stop pauses the song");
+            assert.equal(after.paused, true, "returning to the poster pauses the song");
             assert.ok(
                 Math.abs(after.position - before.position) < 0.1,
-                "Stop preserves the playback position",
+                "returning to the poster preserves the playback position",
             );
             assert.deepEqual(errors, []);
             await page.close();

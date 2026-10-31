@@ -49,7 +49,7 @@ Les contrôles Axis color et Axis font sont masqués dans Joy Division. Dans Spe
 
 ## Modes, lecture et export
 
-Les réglages d’apparence et d’analyse d’un style sont partagés entre fixe et animé. Play lance l’écoute et l’animation ; Stop remet le poster fixe en conservant la position. Changer de mode ne réinitialise pas les couleurs, l’épaisseur, la plage fréquentielle, le nombre de lignes ou les réglages audio. Les valeurs des autres styles restent indépendantes. Le format (orientation, dimensions, unité et DPI compris) et le fichier sont communs à tous les styles.
+Les réglages d’apparence et d’analyse d’un style sont partagés entre fixe et animé. Play lance l’écoute et l’animation ; Pause fige exactement la dernière image affichée en conservant la position. Still poster remet explicitement le poster fixe, sans déplacer la lecture. Changer de mode ne réinitialise pas les couleurs, l’épaisseur, la plage fréquentielle, le nombre de lignes ou les réglages audio. Les valeurs des autres styles restent indépendantes. Le format (orientation, dimensions, unité et DPI compris) et le fichier sont communs à tous les styles.
 
 La position, la durée et le volume du lecteur sont séparés de `PosterState`. Le son reste à vitesse normale. La cadence nominale est fixée à 20 images/s pour le GIF et visée à la même valeur pour l’aperçu ; aucun réglage de cadence supplémentaire n’est exposé. Un changement de personnalisation laisse la musique continuer et le nouveau visuel rejoint sa position courante après le calcul.
 

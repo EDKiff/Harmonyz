@@ -12,7 +12,7 @@ La demande d’implémentation a engagé la réalisation des décisions ci-desso
 
 Le parcours livré s’appuie sur :
 
-- [Welcome](../../../app/welcome/welcome.tsx) et [useSongPlayback](../../../app/welcome/useSongPlayback.ts) pour le lecteur en boucle, Play/Stop, la navigation et les exports.
+- [Welcome](../../../app/welcome/welcome.tsx) et [useSongPlayback](../../../app/welcome/useSongPlayback.ts) pour le lecteur en boucle, Play/Pause, la navigation et les exports.
 - [AudioAnalyzer](../../../app/renderer/AudioAnalyzer.ts) pour les spectres et la durée exacte du morceau entier, sans lecture audible pendant l’analyse.
 - [animationFrame](../../../app/renderer/animation.ts) et [drawPoster](../../../app/renderer/PosterRenderer.ts) pour les mêmes courbes dans l’aperçu animé et le GIF, avec Spectrum et Joy Division.
 - [GifPreparation](../../../app/animation/GifPreparation.ts) et son [worker](../../../app/animation/gif.worker.ts) pour préparer les images pendant l’écoute, les stocker encodées dans IndexedDB, puis compléter l’export indépendamment de l’éditeur.
@@ -44,11 +44,11 @@ L’application affiche un poster fixe par défaut.
 
 **Écoute en boucle validée : musique et animation recommencent automatiquement ensemble.** Dans Harmonyz, à la fin du morceau, la lecture reprend au début avec sa visualisation synchronisée. La boucle pendant l’écoute complète la répétition infinie du GIF exporté.
 
-**Commande principale validée : un bouton Play/Stop au-dessus des panneaux Format et Personnalisation.** Play lance la musique et l’animation, puis le bouton devient Stop pendant la lecture. Stop revient au poster fixe et conserve la position de lecture ; le prochain Play reprend au même passage. Cette commande pilote le passage entre fixe et animé depuis la zone des boutons située au-dessus des panneaux.
+**Commande principale validée : un bouton Play/Pause au-dessus des panneaux Format et Personnalisation.** Play lance la musique et l’animation, puis le bouton devient Pause pendant la lecture. À la suite du signalement visuel de l’utilisateur, Pause conserve désormais exactement la dernière image affichée, ainsi que la position audio ; le prochain Play reprend au même passage. La commande distincte Still poster remet explicitement le poster fixe initial et met la musique en pause, sans déplacer la lecture. Cette clarification remplace le comportement initial de Stop qui revenait automatiquement au poster fixe.
 
 **Choix d’export validé : un menu PNG / GIF sur le bouton Télécharger.** Le bouton de téléchargement ouvre un menu proposant les deux formats. Le choix GIF est disponible même lorsque la musique n’a jamais été lancée ; le PNG du parcours de poster fixe reste accessible. Ce menu conserve une seule commande de téléchargement dans la barre supérieure, sur ordinateur et téléphone.
 
-**Navigation, temps et volume retenus pour le lecteur.** Le lecteur complet déjà validé conserve une barre permettant de se déplacer dans le morceau, le temps écoulé, la durée totale et un réglage de volume. Le bouton Play/Stop est la commande de lecture de la barre supérieure. La visualisation suit la position choisie dans le morceau afin de permettre l’examen d’un passage précis pendant la personnalisation. La disposition des contrôles complémentaires doit respecter leur accès sur ordinateur et téléphone.
+**Navigation, temps et volume retenus pour le lecteur.** Le lecteur complet déjà validé conserve une barre permettant de se déplacer dans le morceau, le temps écoulé, la durée totale et un réglage de volume. Le bouton Play/Pause est la commande de lecture de la barre supérieure. La visualisation suit la position choisie dans le morceau afin de permettre l’examen d’un passage précis pendant la personnalisation. La disposition des contrôles complémentaires doit respecter leur accès sur ordinateur et téléphone.
 
 **Personnalisation pendant l’écoute validée : la musique continue.** Modifier les couleurs, le style ou les réglages audio ne met pas automatiquement la musique en pause. Dès que le nouveau visuel est prêt, il est affiché en synchronisation avec la position de lecture alors courante. Un recalcul ne remet pas le morceau au début.
 
@@ -97,7 +97,7 @@ Les termes clarifiés sont regroupés dans le [glossaire de la feature](glossair
 - Pour un même style, passer de fixe à animé conserve la personnalisation ; une modification de ses réglages communs en animé est retrouvée au retour en fixe, et réciproquement. Les personnalisations des autres styles sont conservées séparément.
 - Dans le mode animé, l’utilisateur peut lancer l’écoute du morceau et voir une représentation qui évolue avec le son.
 - Pour la première version, l’aperçu pendant l’écoute vise une cadence de 20 images/s, comme le GIF. La cadence effective et la fluidité sont à vérifier sur ordinateur et téléphone.
-- Au-dessus des panneaux Format et Personnalisation, Play lance la musique et l’animation puis devient Stop. Stop revient au poster fixe en conservant la position ; le prochain Play reprend au même passage.
+- Au-dessus des panneaux Format et Personnalisation, Play lance la musique et l’animation puis devient Pause. Pause fige exactement la dernière image affichée, sans déplacer la lecture ; le prochain Play reprend au même passage. Still poster remet explicitement le poster fixe initial en mettant le son en pause.
 - Le bouton Télécharger ouvre un menu PNG / GIF ; le GIF est sélectionnable et peut être produit même sans avoir lancé la musique. L’export PNG du poster fixe reste accessible.
 - Le lecteur conserve une barre de navigation, le temps écoulé, la durée totale et le volume. Déplacer la position de lecture affiche le visuel correspondant au passage choisi.
 - Modifier les couleurs, le style ou les réglages audio pendant l’écoute laisse la musique continuer. Le nouveau visuel rejoint la position courante dès qu’il est prêt, sans remise au début du morceau.
@@ -106,7 +106,7 @@ Les termes clarifiés sont regroupés dans le [glossaire de la feature](glossair
 - À la fin de l’écoute du morceau dans Harmonyz, la musique et l’animation recommencent automatiquement ensemble en restant synchronisées.
 - Le visuel se renouvelle par défilement des courbes, avec une impression de déformation des lignes lorsqu’elles prennent la place de leurs voisines.
 - Dès le démarrage de l’animation, l’empilement est complet, avec des courbes de fin du morceau au-dessus des courbes de début. La préparation de ces formes initiales conserve le principe de génération progressive du GIF.
-- Les rangées conservent des hauteurs fixes ; chaque courbe prend progressivement la forme de celle du dessous, avec des formes intermédiaires qui rendent la transition fluide.
+- Les rangées conservent des hauteurs fixes ; chaque courbe prend progressivement la forme de celle du dessous, avec des formes intermédiaires qui rendent la transition fluide. Les pics supérieurs restent entiers, sans découpe du haut de l’empilement.
 - L’intervalle entre les lignes pilote aussi la durée de transformation entre les courbes : pour deux prélèvements espacés de 0,5 seconde, la transition dure 0,5 seconde, avec une lecture audio à vitesse normale.
 - En mode animé, Spectrum affiche des repères temporels relatifs fixes : `0 s` en bas, puis `−Δt`, `−2Δt`, etc. Les notes restent en bas et les repères du GIF suivent la même règle ; Joy Division reste sans axes.
 - L’utilisateur peut télécharger un fichier GIF animé, sans son, configuré pour une répétition infinie.
@@ -120,7 +120,7 @@ Les termes clarifiés sont regroupés dans le [glossaire de la feature](glossair
 - Pendant la génération, l’éditeur reste utilisable et une progression ainsi qu’un bouton Annuler sont visibles. Modifier les réglages à ce moment ne change pas le GIF en cours d’export ; annuler l’export conserve les réglages et l’état du lecteur.
 - Au raccord entre la fin et le début du GIF, les courbes se transforment progressivement pour conserver la continuité visuelle de l’animation.
 
-Les comparaisons visuelles Play/Stop, ajoutées après le signalement des décalages sur les deux styles, sont conservées dans la [recette](validation/README.md#comparaison-visuelle-avant-et-après-stop).
+La [recette de pause](validation/README.md#pause-exacte-et-pics-entiers) compare chaque pixel juste avant et après Pause, puis vérifie que les pics restent entiers dans les deux styles. Les premières comparaisons Play/Stop restent conservées comme historique du diagnostic.
 
 Ces critères restent la référence d’acceptation. La [recette](validation/README.md) distingue les contrôles exécutés, leurs résultats et les vérifications qui restent à effectuer sur des appareils physiques.
 

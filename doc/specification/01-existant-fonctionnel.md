@@ -27,9 +27,9 @@ Sources : [Welcome](../../app/welcome/welcome.tsx), [FormatPanel](../../app/welc
 
 ## Écoute animée
 
-**Play**, au-dessus des panneaux, lance la musique et l’animation puis devient **Stop**. Stop met la musique en pause et revient au poster fixe en conservant sa position. Le prochain Play reprend au même passage. À la fin du morceau, l’élément audio en boucle reprend au début et le visuel suit sa position.
+**Play**, au-dessus des panneaux, lance la musique et l’animation puis devient **Pause**. Pause conserve exactement la dernière image dessinée et la position audio. Le prochain Play reprend au même passage. **Still poster**, dans la barre du lecteur, revient explicitement au poster fixe initial et met le son en pause sans déplacer la position audio. À la fin du morceau, l’élément audio en boucle reprend au début et le visuel suit sa position.
 
-Le lecteur affiche une barre de navigation, le temps écoulé, la durée totale et un réglage de volume. Déplacer le curseur affiche le passage choisi, y compris en pause, sans déclencher l’écoute. Cette inspection reste visible jusqu’au prochain Play ou Stop.
+Le lecteur affiche une barre de navigation, le temps écoulé, la durée totale et un réglage de volume. Déplacer le curseur affiche le passage choisi, y compris en pause, sans déclencher l’écoute. Cette inspection reste visible pendant la pause ; Still poster permet de revenir explicitement au poster fixe.
 
 La position de l’élément audio sert d’horloge à l’aperçu, avec une cible de 20 images/s. Les rangées restent à des hauteurs fixes : leurs courbes prennent progressivement la forme de celles du dessous. L’empilement est complet dès la première image, en utilisant aussi les spectres de fin du morceau. L’intervalle entre les lignes règle la durée des transformations ; le dernier intervalle du morceau est interpolé vers son début pour assurer la continuité visuelle de la boucle.
 

@@ -36,7 +36,7 @@ Sources : [package.json](../../package.json), [package-lock.json](../../package-
 | `app/welcome/welcome.types.ts`, `welcome.constants.ts`          | Contrats d’édition, valeurs initiales, limites, formats et presets.                                        |
 | `app/renderer/PosterGenerator.ts`                               | Lecture du fichier, cache des analyses complètes et API historique limitant les lignes fixes.              |
 | `app/renderer/AudioAnalyzer.ts`                                 | Décodage, sélection du premier canal et prélèvements spectraux hors ligne sur la durée réelle.             |
-| `app/renderer/animation.ts`                                     | Interpolation cyclique des spectres, rangées fixes et échelle d’amplitude globale.                         |
+| `app/renderer/animation.ts`                                     | Interpolation cyclique, échelle globale et borne de relief sur le morceau entier.                          |
 | `app/renderer/PosterRenderer.ts`                                | Fonction drawPoster partagée entre aperçu, PNG et GIF ; filtrage, axes et sélection du style.              |
 | `app/renderer/JoyDivisionRenderer.ts`                           | Tracé Joy Division, avec géométrie stabilisée pour l’animation.                                            |
 | `app/renderer/PosterComponent.tsx`                              | Adaptateur React du rendu partagé vers le canevas d’aperçu.                                                |
@@ -105,9 +105,9 @@ Les amplitudes analysées sont comprises entre 0 et 255 ; l’interpolation anim
 
 PosterGenerator conserve au plus quatre promesses d’analyse par fichier dans une WeakMap, selon FFT, lissage, décibels et intervalle. Apparence, format et nombre de lignes réutilisent les spectres. Les échecs sont retirés du cache pour permettre un nouvel essai. L’analyseur ferme son contexte audio dans un bloc finally.
 
-useSongPlayback gère une URL d’objet pour le fichier courant et un élément `<audio loop>`. Cet élément est l’horloge audible ; requestAnimationFrame lit son currentTime au plus une fois par tranche de 50 ms. L’animation et l’export ne pilotent pas sa progression. La pause conserve la position ; un changement de fichier ferme l’ancienne URL et repart au début en pause.
+useSongPlayback gère une URL d’objet pour le fichier courant et un élément `<audio loop>`. Cet élément est l’horloge audible ; requestAnimationFrame lit son currentTime au plus une fois par tranche de 50 ms. L’animation et l’export ne pilotent pas sa progression. La pause conserve la position audio et le temps de la dernière image affichée : elle ne recopie pas currentTime dans l’état de rendu, et les callbacks d’animation restants ignorent un élément audio déjà en pause. Le mode de vue est indépendant de isPlaying : une pause conserve la vue animée figée ; Still poster rétablit explicitement la vue fixe. Un changement de fichier ferme l’ancienne URL et repart au début en pause, en vue fixe.
 
-PosterComponent dessine via drawPoster dans un effet de mise en page. Le PNG utilise aussi cette fonction, mais dans un canevas fixe séparé de l’aperçu animé. Le GIF partage le même rendu dans un OffscreenCanvas du worker.
+PosterComponent dessine via drawPoster dans un effet de mise en page. Le PNG utilise aussi cette fonction, mais dans un canevas fixe séparé de l’aperçu animé. Le GIF partage le même rendu dans un OffscreenCanvas du worker. globalAnalysisScale calcule sur tous les spectres le maximum d’amplitude et la borne du relief pondéré par l’enveloppe Joy Division. L’aperçu, le PNG et le worker emploient ces mêmes valeurs stables ; la marge supérieure ne dépend pas de l’image courante.
 
 ## Préparation et isolation du GIF
 

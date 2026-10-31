@@ -106,7 +106,7 @@ function inspectGif(buffer) {
         });
         await page.goto(baseURL);
         const play = () => page.getByRole("button", { name: "Play", exact: true });
-        const stop = () => page.getByRole("button", { name: "Stop", exact: true });
+        const pause = () => page.getByRole("button", { name: "Pause", exact: true });
         const save = page.getByRole("button", { name: "Save", exact: true });
         const audio = page.getByLabel("Song playback");
         const state = () =>
@@ -242,10 +242,19 @@ function inspectGif(buffer) {
         assert.equal((await state()).paused, false);
         assert.ok((await state()).time >= beforePng.time);
         console.log("PNG DURING PLAYBACK / STATIC POSTER / PLAYBACK PRESERVED OK");
-        await stop().click();
+        await pause().click();
         const paused = await state();
         assert.equal(paused.paused, true);
         assert.ok(paused.time > 0.2);
+        await page.getByRole("button", { name: "Still poster", exact: true }).click();
+        assert.equal((await state()).paused, true);
+        assert.equal(
+            await page
+                .locator("canvas")
+                .evaluate((canvas) => canvas.toDataURL("image/png").split(",")[1]),
+            initialStaticPng,
+            "returning to the still poster is explicit and restores the fixed view",
+        );
         await play().click();
         await page.waitForTimeout(100);
         assert.ok((await state()).time >= paused.time);
@@ -265,12 +274,12 @@ function inspectGif(buffer) {
         await slider("Song position", 2.02);
         await page.waitForTimeout(400);
         assert.ok((await state()).time < 0.8, "playback loops to the beginning");
-        await stop().click();
+        await pause().click();
         assert.equal(
             await page.getByLabel("Stroke color", { exact: true }).inputValue(),
             "#ff0000",
         );
-        console.log("PLAY / STOP / RESUME / SEEK / VOLUME / STYLE / LIVE SETTINGS / LOOP OK");
+        console.log("PLAY / PAUSE / RESUME / SEEK / VOLUME / STYLE / LIVE SETTINGS / LOOP OK");
 
         // .501 s used to suspend beyond the last Web Audio rendering quantum and hang analysis.
         await load("quantum-edge.wav", 0.501);
@@ -328,9 +337,10 @@ function inspectGif(buffer) {
         await startGif();
         await page.getByRole("button", { name: "Cancel export", exact: true }).click();
         assert.equal((await state()).paused, false);
-        await stop().click();
+        await pause().click();
         console.log("CANCEL PRESERVES PLAYBACK OK");
 
+        await play().waitFor();
         await page.setViewportSize({ width: 390, height: 844 });
         const controls = [
             play(),
@@ -339,7 +349,7 @@ function inspectGif(buffer) {
             page.getByLabel("Volume", { exact: true }),
         ];
         for (const control of controls) {
-            assert.equal(await control.isVisible(), true);
+            assert.equal(await control.isVisible(), true, `mobile control visible: ${control}`);
             const rectangle = await control.boundingBox();
             assert.ok(rectangle.x >= 0 && rectangle.x + rectangle.width <= 390);
             assert.ok(rectangle.y >= 0 && rectangle.y + rectangle.height <= 844);
@@ -354,7 +364,7 @@ function inspectGif(buffer) {
         await play().click();
         await page.waitForTimeout(150);
         await slider("Song position", 0.4);
-        await stop().click();
+        await pause().click();
         const mobilePosition = (await state()).time;
         const mobileDownload = page.waitForEvent("download", { timeout: 180000 });
         await startGif();
@@ -379,7 +389,7 @@ function inspectGif(buffer) {
         await ready();
         await play().click();
         await page.waitForTimeout(500);
-        await stop().click();
+        await pause().click();
         assert.ok((await state()).duration > 1);
         assert.ok((await state()).time > 0);
         assert.deepEqual(errors, []);

@@ -33,6 +33,7 @@ export type PosterDrawing = {
     yAxisDataStepInSeconds?: number;
     animated?: boolean;
     amplitudePeak?: number;
+    maxReliefRatio?: number;
 };
 
 /** The same drawing operation is used for preview, PNG and GIF frames. */
@@ -48,6 +49,7 @@ export function drawPoster(ctx: PosterCanvasContext, drawing: PosterDrawing) {
         yAxisDataStepInSeconds = 0.5,
         animated = false,
         amplitudePeak,
+        maxReliefRatio,
     } = drawing;
     ctx.save();
     try {
@@ -76,6 +78,7 @@ export function drawPoster(ctx: PosterCanvasContext, drawing: PosterDrawing) {
                 height,
                 parameters,
                 amplitudePeak,
+                maxReliefRatio,
             );
             return;
         }

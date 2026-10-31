@@ -1,5 +1,10 @@
 import type { PosterCanvasContext, PosterComponentParameters } from "./PosterRenderer";
 
+/** Shared by drawing and the full-track bound used to reserve space above the first row. */
+export function joyDivisionEnvelope(position: number) {
+    return Math.exp(-0.5 * ((position - 0.5) / 0.16) ** 2) * Math.sin(Math.PI * position);
+}
+
 /** Audio-only ridgelines: one spectrum per row, one shared amplitude scale. */
 export function drawJoyDivision(
     ctx: PosterCanvasContext,
@@ -8,6 +13,7 @@ export function drawJoyDivision(
     height: number,
     parameters: PosterComponentParameters,
     amplitudePeak = 255,
+    maxReliefRatio = 1,
 ) {
     if (spectra.length === 0) return;
 
@@ -15,31 +21,34 @@ export function drawJoyDivision(
     const marginY = height * 0.065;
     const plotWidth = width - marginX * 2;
     const peakHeight = Math.min(plotWidth * 0.24, height * 0.18);
-    const plotHeight = height - marginY * 2;
     const rowCount = Math.max(1, parameters.lineCount ?? spectra.length, spectra.length);
-    const spacing = plotHeight / (rowCount + 1);
+    const lineWidth = parameters.dataLinesWidth * (Math.min(width, height) / 840);
+    const halfStroke = lineWidth / 2;
+    const reliefBound = Number.isFinite(maxReliefRatio)
+        ? Math.min(1, Math.max(0, maxReliefRatio))
+        : 1;
+    // This bound comes from the entire song, never from the current animation frame.
+    // Reserve the actual tallest relief and stroke, rather than clipping the upper curves.
+    const firstBaseline = marginY + peakHeight * reliefBound + halfStroke;
+    const lastBaseline = height - marginY - halfStroke;
+    const baselineSpan = Math.max(0, lastBaseline - firstBaseline);
+    const spacing = baselineSpan / Math.max(1, rowCount - 1);
 
     ctx.save();
     // Scale the stroke with the support, including high-resolution exports.
-    ctx.lineWidth = parameters.dataLinesWidth * (Math.min(width, height) / 840);
+    ctx.lineWidth = lineWidth;
     ctx.lineJoin = "round";
     ctx.lineCap = "round";
     ctx.fillStyle = parameters.backgroundColor;
-    // Reserve one row interval at each end, rather than a full peak-height above the stack.
-    // Peaks leaving the top row stay inside the drawing area without shifting the other rows.
-    ctx.beginPath();
-    ctx.rect(0, marginY, width, plotHeight);
-    ctx.clip();
-
     const rows = spectra.map((spectrum, row) => {
-        const baseline = marginY + (row + 1) * spacing;
+        const baseline =
+            rowCount === 1 ? firstBaseline + baselineSpan / 2 : firstBaseline + row * spacing;
         const points = spectrum.map((value, index) => {
             const position = spectrum.length === 1 ? 0.5 : index / (spectrum.length - 1);
-            const envelope =
-                Math.exp(-0.5 * ((position - 0.5) / 0.16) ** 2) * Math.sin(Math.PI * position);
+            const envelope = joyDivisionEnvelope(position);
             const amplitude =
                 amplitudePeak > 0 && Number.isFinite(value)
-                    ? Math.max(0, value) / amplitudePeak
+                    ? Math.min(1, Math.max(0, value) / amplitudePeak)
                     : 0;
             return {
                 x: marginX + position * plotWidth,

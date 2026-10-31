@@ -63,6 +63,8 @@ La recette de production a été enrichie du contrôle PNG pendant la lecture pu
 
 ## Comparaison visuelle avant et après Stop
 
+Cette section conserve le contrôle historique du commit `65910d6`. Il vérifiait les rangées mais laissait le contenu changer à la pause et les pics supérieurs être coupés. Le [contrôle complémentaire](#pause-exacte-et-pics-entiers) ci-dessous remplace ces critères insuffisants ; les anciennes captures restent conservées pour expliquer le diagnostic. Le script historique utilise maintenant le retour explicite Still poster pour comparer la lecture avec le poster initial.
+
 Après le signalement de décalages dans les deux styles, le [script de comparaison](stop-comparison.cjs) a été exécuté sur `song.mp3`, en A4 portrait (840 × 1 188 px), dans Chromium à 1 440 × 1 000 px. Il place la lecture vers 12 secondes, capture le canevas puis déclenche Stop dans la même tâche navigateur ; il prend ensuite une seconde capture une fois le poster fixe redessiné. Les commandes Canvas observées permettent de comparer chaque hauteur de rangée, tandis que les dimensions affichées et la position audio sont vérifiées séparément.
 
 ```bash
@@ -87,5 +89,26 @@ La boucle minimale `node --test tests/poster-renderer.test.cjs` a d’abord mont
 La campagne comparative a également réussi sur le build de production (`PORT=3182 npm start`). Pour chaque style, le PNG téléchargé après Stop est identique octet par octet au canevas fixe capturé ; le résultat `pngMatchesFixedPreview` figure dans les mesures corrigées. La suite complète passe désormais avec **17 tests**, ainsi que TypeScript, Prettier et le build client/serveur. Les revues Standards et Spec du correctif n’ont identifié aucun écart.
 
 La recette générale a été rejouée sur ce build de production : lecture, reprise, navigation, boucle, PNG pendant l’écoute, export GIF avant écoute, personnalisation uniforme, changement de morceau pendant export, annulation et téléphone simulé passent sans erreur navigateur. Après la modification du dessin, les tailles de GIF ont changé : 340 354 octets pour Spectrum de 2,127 s, 93 474 octets pour Joy Division A4 de 0,501 s, 1 339 488 octets pour l’export isolé de 8,127 s et 96 807 octets pour l’export après écoute partielle. Les dimensions, nombres d’images, durées et boucles restent conformes aux contrôles précédents.
+
+## Pause exacte et pics entiers
+
+Après les captures fournies par l’utilisateur, la commande Play/Stop a été remplacée par Play/Pause : Pause conserve exactement le dernier dessin affiché, y compris les repères relatifs de Spectrum. Le retour au poster initial est désormais explicite via Still poster. Le [script de pause](pause-comparison.cjs) observe l’image entière à 12 et 60 secondes de `song.mp3`, pour les deux styles. Il capture l’image et clique sur la commande dans la même tâche JavaScript ; les callbacks rAF sont suspendus à cet instant pour empêcher une image supplémentaire de fausser la comparaison, tandis que le temps audio continue normalement jusqu’au clic.
+
+```bash
+HARMONYZ_URL=http://127.0.0.1:3181 PLAYWRIGHT_MODULE=/chemin/vers/playwright HARMONYZ_CAPTURE_DIR=/tmp/harmonyz-pause node doc/feature/003-mode-anime-musical/validation/pause-comparison.cjs
+```
+
+Avant correction, ce test échouait avec plus de cent mille pixels différents par style et par pause, malgré la stabilité des rangées. Il observait également deux points Joy Division au-dessus de la découpe supérieure à 12 secondes. La régression minimale `node --test --test-name-pattern='loudest upper' tests/poster-renderer.test.cjs` échouait avec un pic à **−89,444 px** sur un canevas A4. Les [résultats avant correction](pause/before/results.json) correspondent au commit `65910d6`.
+
+| Style        | Pixels différents à 12 s avant correction | Pixels différents après correction, à 12 et 60 s | Avant correction                                                 | Après correction                                                         |
+| ------------ | ----------------------------------------- | ------------------------------------------------ | ---------------------------------------------------------------- | ------------------------------------------------------------------------ |
+| Spectrum     | 108 039                                   | 0                                                | [Comparaison initiale](pause/before/spectrum-comparison.png)     | [Image conservée](pause/after/spectrum-comparison.png)                   |
+| Joy Division | 234 850                                   | 0                                                | [Comparaison initiale](pause/before/joy-division-comparison.png) | [Image conservée, pics entiers](pause/after/joy-division-comparison.png) |
+
+Les [résultats corrigés](pause/after/results.json) comprennent les empreintes SHA-256 des PNG avant/après, le nombre exact de pixels modifiés et la position audio. Les quatre pauses conservent des images identiques. Les pics observés restent à l’intérieur du canevas et aucune zone de découpe supérieure n’est appliquée. Les tests du renderer couvrent en plus le relief maximal sur A4 portrait, A4 paysage et petit format, ainsi qu’une séquence interpolée dont la réserve dépend des données du morceau entier.
+
+La réserve supérieure Joy Division vient du relief maximal calculé sur le morceau, jamais de l’image courante ; les rangées ne changent donc pas de cadrage au fil de l’écoute. Cette réserve laisse un espace au-dessus des passages calmes, nécessaire pour contenir aussi les pics plus hauts du même morceau sans les couper.
+
+La campagne pixel par pixel a aussi réussi sur le build de production (`PORT=3182 npm start`), avec les mêmes quatre images strictement conservées et aucun pic coupé. La recette générale adaptée à Play/Pause a vérifié le retour explicite Still poster, la reprise, la navigation, le volume, la boucle, le PNG fixe pendant l’écoute et les GIF complets avant/après écoute. L’export isolé, le changement de morceau, l’annulation et les commandes sur téléphone simulé restent fonctionnels, sans erreur navigateur. Les 20 tests Node, TypeScript et le build client/serveur ont réussi. Cette campagne reste limitée à Chromium ; elle ne remplace pas une validation sur téléphones physiques et plusieurs moteurs.
 
 [Retour à la feature 003](../README.md).

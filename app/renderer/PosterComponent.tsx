@@ -17,6 +17,7 @@ interface PosterComponentProps {
     canvasHeight: number;
     animated?: boolean;
     amplitudePeak?: number;
+    maxReliefRatio?: number;
 }
 
 const PosterComponent = ({
@@ -31,6 +32,7 @@ const PosterComponent = ({
     canvasHeight,
     animated = false,
     amplitudePeak,
+    maxReliefRatio,
 }: PosterComponentProps) => {
     const canvasRef = useRef<HTMLCanvasElement>(null);
     useLayoutEffect(() => {
@@ -48,6 +50,7 @@ const PosterComponent = ({
             height: canvas.height,
             animated,
             amplitudePeak,
+            maxReliefRatio,
         });
     }, [
         drawingStyle,
@@ -60,6 +63,7 @@ const PosterComponent = ({
         canvasHeight,
         animated,
         amplitudePeak,
+        maxReliefRatio,
     ]);
     return (
         <div className="poster-container flex h-full w-full items-center justify-center">

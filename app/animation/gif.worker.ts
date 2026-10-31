@@ -1,6 +1,6 @@
 import { GIFEncoder, applyPalette, quantize } from "gifenc";
 import { NOTES } from "../notes/Notes";
-import { animationFrame, globalAnalysisPeak } from "../renderer/animation";
+import { animationFrame, globalAnalysisScale } from "../renderer/animation";
 import { drawPoster } from "../renderer/PosterRenderer";
 import { GIF_FPS, gifFrameDelay, gifTimeline, validateGifDimensions } from "./gifTimeline";
 import type { GifRequest, GifResponse, GifSnapshot } from "./gifMessages";
@@ -12,6 +12,7 @@ let database: IDBDatabase | undefined;
 let initialization: Promise<void> | undefined;
 let frameCount = 0;
 let amplitudePeak = 0;
+let maxReliefRatio = 1;
 const prepared = new Set<number>();
 const requested = new Set<number>();
 let exporting: { id: number; cursor: number } | undefined;
@@ -39,7 +40,10 @@ async function initialize(configuration: GifSnapshot, databaseName: string) {
     const renderingContext = canvas.getContext("2d", { willReadFrequently: true });
     if (!renderingContext) throw new Error("The browser could not create the GIF canvas.");
     context = renderingContext;
-    amplitudePeak = globalAnalysisPeak(snapshot.analysis, snapshot.parameters);
+    ({ amplitudePeak, maxReliefRatio } = globalAnalysisScale(
+        snapshot.analysis,
+        snapshot.parameters,
+    ));
     database = await openDatabase(databaseName);
 }
 
@@ -73,6 +77,7 @@ async function encodeFrame(index: number) {
         height: snapshot.height,
         animated: true,
         amplitudePeak,
+        maxReliefRatio,
     });
     const pixels = context.getImageData(0, 0, canvas.width, canvas.height).data;
     const palette = quantize(pixels, 256);

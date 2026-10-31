@@ -14,8 +14,11 @@ Une représentation immobile d’une musique, destinée à être regardée ou ex
 Une représentation d’une musique qui évolue avec le son pendant son écoute dans Harmonyz.
 _À éviter_ : « GIF » pour désigner cette expérience avec son dans l’application.
 
-**Stop** :
-La commande qui met la musique en pause et revient au poster fixe, en conservant la position de lecture. Le prochain Play reprend au même passage.
+**Pause** :
+La commande qui met la musique en pause et conserve exactement la dernière image affichée, sans revenir au poster initial. Le prochain Play reprend au même passage.
+
+**Retour au poster fixe** :
+L’action explicite Still poster qui affiche les premières tranches du poster fixe et met la musique en pause sans déplacer la position audio. Elle remplace le retour automatique au poster initial de l’ancien bouton Stop.
 
 **Écoute en boucle** :
 La répétition automatique du morceau entier dans Harmonyz, accompagnée de sa visualisation synchronisée. À la fin du morceau, la musique et l’animation recommencent ensemble au début.

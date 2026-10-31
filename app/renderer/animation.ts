@@ -1,5 +1,6 @@
 import type { AnalyzedAudioData } from "./AudioAnalyzer";
 import type { PosterComponentParameters, YAxisData } from "./PosterRenderer";
+import { joyDivisionEnvelope } from "./JoyDivisionRenderer";
 
 type AnimationParameters = Pick<PosterComponentParameters, "lineCount"> & {
     durationBetweenLines: number;
@@ -43,11 +44,11 @@ export function animationFrame(
     });
 }
 
-/** A stable audio scale prevents the animated rows from changing height at every frame. */
-export function globalAnalysisPeak(
+/** Bounds from the full song keep scale and headroom stable, including between samples. */
+export function globalAnalysisScale(
     analysis: AnalyzedAudioData,
     parameters: Pick<PosterComponentParameters, "minFrequency" | "maxFrequency">,
-): number {
+) {
     const selectedBins: number[] = [];
     for (let bin = 0; bin < analysis.xAxis.length; bin++) {
         const frequency = analysis.xAxis[bin];
@@ -55,12 +56,26 @@ export function globalAnalysisPeak(
             selectedBins.push(bin);
         }
     }
-    let peak = 0;
+    let amplitudePeak = 0;
+    const binPeaks = selectedBins.map(() => 0);
     for (const spectrum of analysis.frequencyData) {
-        for (const bin of selectedBins) {
-            const value = spectrum[bin];
-            if (Number.isFinite(value)) peak = Math.max(peak, value);
+        for (let index = 0; index < selectedBins.length; index++) {
+            const value = spectrum[selectedBins[index]];
+            if (Number.isFinite(value)) {
+                binPeaks[index] = Math.max(binPeaks[index], value);
+                amplitudePeak = Math.max(amplitudePeak, value);
+            }
         }
     }
-    return peak;
+    let maxReliefRatio = 0;
+    if (amplitudePeak > 0) {
+        for (let index = 0; index < binPeaks.length; index++) {
+            const position = binPeaks.length === 1 ? 0.5 : index / (binPeaks.length - 1);
+            maxReliefRatio = Math.max(
+                maxReliefRatio,
+                Math.pow(binPeaks[index] / amplitudePeak, 2.2) * joyDivisionEnvelope(position),
+            );
+        }
+    }
+    return { amplitudePeak, maxReliefRatio };
 }

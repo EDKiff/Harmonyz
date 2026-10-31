@@ -1,9 +1,9 @@
 import { type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Download, Play, Ruler, Settings, Square, Upload, X } from "lucide-react";
+import { Download, Pause, Play, Ruler, Settings, Upload, X } from "lucide-react";
 import logo from "./logo.png";
 import { PosterGenerator } from "../renderer/PosterGenerator";
 import type { AnalyzedAudioData } from "../renderer/AudioAnalyzer";
-import { animationFrame, globalAnalysisPeak } from "../renderer/animation";
+import { animationFrame, globalAnalysisScale } from "../renderer/animation";
 import { drawPoster } from "../renderer/PosterRenderer";
 import { GifPreparation } from "../animation/GifPreparation";
 import { validateGifDimensions } from "../animation/gifTimeline";
@@ -73,7 +73,7 @@ export function Welcome() {
     const [retry, setRetry] = useState(0);
     const [exportProgress, setExportProgress] = useState<number | null>(null);
     const [isDownloadMenuOpen, setIsDownloadMenuOpen] = useState(false);
-    const [isInspecting, setIsInspecting] = useState(false);
+    const [isAnimatedView, setIsAnimatedView] = useState(false);
     const [isPersonalizationPanelVisible, setIsPersonalizationPanelVisible] = useState(true);
     const [isFormatPanelVisible, setIsFormatPanelVisible] = useState(true);
     const [editor, setEditor] = useState(createPosterEditorState);
@@ -84,7 +84,7 @@ export function Welcome() {
     const [throttledPosterState, setThrottledPosterState] = useState<PosterState>(posterState);
     const [renderStyle, setRenderStyle] = useState(editor.selectedStyle);
     const player = useSongPlayback(selectedFile);
-    const animated = player.isPlaying || isInspecting;
+    const animated = isAnimatedView;
 
     useEffect(() => {
         const timeout = window.setTimeout(() => {
@@ -206,8 +206,11 @@ export function Welcome() {
             activeExportRef.current?.cancel();
         };
     }, []);
-    const amplitudePeak = useMemo(
-        () => (rendered ? globalAnalysisPeak(rendered.analysis, rendered.parameters) : 0),
+    const { amplitudePeak, maxReliefRatio } = useMemo(
+        () =>
+            rendered
+                ? globalAnalysisScale(rendered.analysis, rendered.parameters)
+                : { amplitudePeak: 0, maxReliefRatio: 0 },
         [rendered],
     );
     const staticRows = useMemo(
@@ -253,6 +256,7 @@ export function Welcome() {
                 height: canvas.height,
                 yAxisDataStepInSeconds: rendered.parameters.durationBetweenLines,
                 amplitudePeak,
+                maxReliefRatio,
             });
             const name = filename();
             const blob = await new Promise<Blob | null>((resolve) =>
@@ -304,7 +308,7 @@ export function Welcome() {
         if (!file) return;
         generationCounterRef.current++;
         setRendered(null);
-        setIsInspecting(false);
+        setIsAnimatedView(false);
         setError(null);
         setSelectedFile(file);
         event.target.value = "";
@@ -327,7 +331,10 @@ export function Welcome() {
                 aria-label="Song playback"
                 loop
                 preload="metadata"
-                onPlay={player.onPlay}
+                onPlay={() => {
+                    setIsAnimatedView(true);
+                    player.onPlay();
+                }}
                 onPause={player.onPause}
                 onLoadedMetadata={player.onLoadedMetadata}
                 onSeeked={player.onSeeked}
@@ -339,18 +346,17 @@ export function Welcome() {
                     <button
                         type="button"
                         onClick={() => {
-                            setIsInspecting(false);
                             void player.toggle();
                         }}
                         disabled={!player.isPlaying && (!rendered || !!dimensionsError)}
                         className="inline-flex h-10 items-center gap-2 rounded-full bg-slate-900 px-4 text-sm font-medium text-white disabled:opacity-50"
                     >
                         {player.isPlaying ? (
-                            <Square className="h-4 w-4" />
+                            <Pause className="h-4 w-4" />
                         ) : (
                             <Play className="h-4 w-4" />
                         )}
-                        {player.isPlaying ? "Stop" : "Play"}
+                        {player.isPlaying ? "Pause" : "Play"}
                     </button>
                     <IconButton
                         active={isPersonalizationPanelVisible}
@@ -443,7 +449,7 @@ export function Welcome() {
                                 disabled={!player.duration}
                                 onChange={(e) => {
                                     player.seek(Number(e.target.value));
-                                    setIsInspecting(true);
+                                    setIsAnimatedView(true);
                                 }}
                                 aria-label="Song position"
                                 className="h-8 min-w-0 flex-1"
@@ -462,6 +468,17 @@ export function Welcome() {
                                 className="h-8 w-20"
                             />
                         </label>
+                        <button
+                            type="button"
+                            disabled={!animated}
+                            onClick={() => {
+                                player.audioRef.current?.pause();
+                                setIsAnimatedView(false);
+                            }}
+                            className="rounded-lg border border-slate-300 px-3 py-2 disabled:opacity-50"
+                        >
+                            Still poster
+                        </button>
                     </div>
                 )}
                 {isGenerating && (
@@ -528,6 +545,7 @@ export function Welcome() {
                             canvasHeight={posterDimensions.heightPx}
                             animated={animated}
                             amplitudePeak={amplitudePeak}
+                            maxReliefRatio={maxReliefRatio}
                         />
                     ) : (
                         <div className="max-w-sm rounded-xl border border-slate-200 p-6 text-center shadow-lg">

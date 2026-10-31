@@ -1,0 +1,70 @@
+[
+    {
+        "style": "spectrum",
+        "cycles": [
+            {
+                "time": 12,
+                "imageIdentical": true,
+                "changedPixels": 0,
+                "beforeHash": "bc61b7cf381881f1a8e958bca7583c540d89b06bac6ab8d5c26c9fa71cc26200",
+                "afterHash": "bc61b7cf381881f1a8e958bca7583c540d89b06bac6ab8d5c26c9fa71cc26200",
+                "beforePosition": 12.10166,
+                "afterPosition": 12.101899,
+                "paused": true,
+                "canvasBoundsStable": true,
+                "beforeMinY": 91.094360392157,
+                "clippedPoints": 0,
+                "clippingBoundary": null
+            },
+            {
+                "time": 60,
+                "imageIdentical": true,
+                "changedPixels": 0,
+                "beforeHash": "497e819c94518f6bf3598e495c9b94d9e795c1151174b405d91c515c06a7c2a4",
+                "afterHash": "497e819c94518f6bf3598e495c9b94d9e795c1151174b405d91c515c06a7c2a4",
+                "beforePosition": 60.129476,
+                "afterPosition": 60.129611,
+                "paused": true,
+                "canvasBoundsStable": true,
+                "beforeMinY": 73.99065882352947,
+                "clippedPoints": 0,
+                "clippingBoundary": null
+            }
+        ],
+        "errors": []
+    },
+    {
+        "style": "joy-division",
+        "cycles": [
+            {
+                "time": 12,
+                "imageIdentical": true,
+                "changedPixels": 0,
+                "beforeHash": "c4195eee2f4b6a28d53ddf728fc4aa338c82652f9d352b5e202f97b2e9b7d038",
+                "afterHash": "c4195eee2f4b6a28d53ddf728fc4aa338c82652f9d352b5e202f97b2e9b7d038",
+                "beforePosition": 12.098103,
+                "afterPosition": 12.098388,
+                "paused": true,
+                "canvasBoundsStable": true,
+                "beforeMinY": 179.86590320761255,
+                "clippedPoints": 0,
+                "clippingBoundary": null
+            },
+            {
+                "time": 60,
+                "imageIdentical": true,
+                "changedPixels": 0,
+                "beforeHash": "0699039efde38785aa12bb3ef926e4efbb807f535bd2f7a72fbf182e3d14b5fb",
+                "afterHash": "0699039efde38785aa12bb3ef926e4efbb807f535bd2f7a72fbf182e3d14b5fb",
+                "beforePosition": 60.107055,
+                "afterPosition": 60.107223,
+                "paused": true,
+                "canvasBoundsStable": true,
+                "beforeMinY": 187.7128123801502,
+                "clippedPoints": 0,
+                "clippingBoundary": null
+            }
+        ],
+        "errors": []
+    }
+]

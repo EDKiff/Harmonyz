@@ -2,6 +2,7 @@ const assert = require("node:assert/strict");
 const { test } = require("node:test");
 const loadTypeScript = require("./load-typescript.cjs");
 const { drawPoster } = loadTypeScript("app/renderer/PosterRenderer.ts");
+const { animationFrame, globalAnalysisScale } = loadTypeScript("app/renderer/animation.ts");
 
 const parameters = {
     lineCount: 3,
@@ -19,6 +20,7 @@ function canvasCommands() {
     const labels = [];
     const strokes = [];
     const colors = [];
+    const clippingAreas = [];
     let contour = [];
     const coordinate = (...values) =>
         values.forEach((value) =>
@@ -27,7 +29,10 @@ function canvasCommands() {
     const ctx = {
         save() {},
         restore() {},
-        rect: coordinate,
+        rect(...bounds) {
+            coordinate(...bounds);
+            clippingAreas.push(bounds);
+        },
         clip() {},
         closePath() {},
         fill() {},
@@ -64,7 +69,7 @@ function canvasCommands() {
             };
         },
     };
-    return { ctx, labels, strokes, colors };
+    return { ctx, labels, strokes, colors, clippingAreas };
 }
 
 const drawing = (amplitude, style = "spectrum") => ({
@@ -154,6 +159,46 @@ for (const style of ["spectrum", "joy-division"]) {
     });
 }
 
+test("Joy Division reserves only the full-song relief and contains interpolated peaks", () => {
+    const analysis = {
+        duration: 1.2,
+        xAxis: [1000, 2000, 3000],
+        frequencyData: [
+            [255, 0, 255],
+            [255, 128, 255],
+            [255, 64, 255],
+        ],
+    };
+    const scale = globalAnalysisScale(analysis, parameters);
+    assert.equal(scale.amplitudePeak, 255);
+    assert.ok(
+        scale.maxReliefRatio > 0.2 && scale.maxReliefRatio < 0.25,
+        "an off-centre maximum must not reserve a full-height central peak",
+    );
+    let baselines;
+    for (const time of [0, 0.25, 0.5, 0.75, 1, 1.1, 1.2]) {
+        const commands = canvasCommands();
+        const settings = { ...parameters, lineCount: 80, durationBetweenLines: 0.5 };
+        drawPoster(commands.ctx, {
+            ...drawing(128, "joy-division"),
+            ...scale,
+            parameters: settings,
+            yAxisData: animationFrame(analysis, settings, time),
+        });
+        const ys = commands.strokes.flatMap((path) =>
+            path.flatMap((point) => point.filter((_, index) => index % 2 === 1)),
+        );
+        assert.ok(
+            Math.min(...ys) - commands.ctx.lineWidth / 2 >= 1188 * 0.065 - 1e-9,
+            "every interpolated upper peak fits above the reserved baseline",
+        );
+        const currentBaselines = commands.strokes.map((path) => path[0][1]);
+        if (baselines)
+            assert.deepEqual(currentBaselines, baselines, "headroom never pumps with time");
+        baselines = currentBaselines;
+    }
+});
+
 test("Spectrum note labels align with the frequency samples across the entire plot", () => {
     const commands = canvasCommands();
     drawPoster(commands.ctx, {
@@ -169,3 +214,40 @@ test("Spectrum note labels align with the frequency samples across the entire pl
     assert.deepEqual(noteXs, [50, 420, 790], "frequency labels span the plot without overshooting");
     assert.deepEqual(sampleXs, noteXs, "each note sits under its frequency sample");
 });
+
+for (const style of ["spectrum", "joy-division"]) {
+    test(`${style} keeps the loudest upper curves entirely inside the canvas`, () => {
+        for (const [width, height] of [
+            [840, 1188],
+            [1188, 840],
+            [240, 320],
+        ]) {
+            const commands = canvasCommands();
+            const frame = drawing(255, style);
+            drawPoster(commands.ctx, {
+                ...frame,
+                width,
+                height,
+                parameters: { ...parameters, lineCount: 80 },
+                yAxisData: Array.from({ length: 80 }, () => frame.yAxisData[0]),
+            });
+            const curveStrokes = commands.strokes.slice(style === "spectrum" ? 1 : 0);
+            const peakY = Math.min(
+                ...curveStrokes.flatMap((path) =>
+                    path.flatMap((point) => point.filter((_, index) => index % 2 === 1)),
+                ),
+            );
+            const halfStroke = commands.ctx.lineWidth / 2;
+            assert.ok(
+                peakY >= halfStroke,
+                `the upper peak at ${peakY} must not leave ${width}×${height}`,
+            );
+            for (const [, top] of commands.clippingAreas) {
+                assert.ok(
+                    peakY - halfStroke >= top,
+                    "the upper peak must not be cut by a clipping area",
+                );
+            }
+        }
+    });
+}
